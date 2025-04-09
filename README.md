@@ -19,11 +19,11 @@ Datasets:
 ---
 Classes included:
 
-sObj (CLASS_photometry_roadmapv1_4.m): completes initial processing of single-session and composite session objects using the UI specified photometry signal.
-cObj (CLASS_STATcollate_photometry_roadmapv1_4.m): allows collation of single-session data for analyses. Analyses specified in the header. Use #method-name to see associated functions available for each analysis.
-sloshing_obj (CLASS_sloshing_obj.m): produces sloshing regression models and analyses
-eps (EphysStimPhot.m): produces v2.0 versions of single-session objects, inherits methods from sObj with additional features
-zzt (CLASS_ZigZagTimewindows.m): contains methods for block processing in the Timeshift version of the task (Hamilos et al., 2025)
+-- ```sObj``` (CLASS_photometry_roadmapv1_4.m): completes initial processing of single-session and composite session objects using the UI specified photometry signal.
+-- ```cObj``` (CLASS_STATcollate_photometry_roadmapv1_4.m): allows collation of single-session data for analyses. Analyses specified in the header. Use #method-name to see associated functions available for each analysis.
+-- ```sloshing_obj``` (CLASS_sloshing_obj.m): produces sloshing regression models and analyses
+-- ```eps``` (EphysStimPhot.m): produces v2.0 versions of single-session objects, inherits methods from sObj with additional features
+-- ```zzt``` (CLASS_ZigZagTimewindows.m): contains methods for block processing in the Timeshift version of the task (Hamilos et al., 2025)
 
 ---
 Preparing analyses:
