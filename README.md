@@ -10,6 +10,8 @@ For code usage or troubleshooting, please reach out - our team will be happy to 
 Contains the latest release (v2.0.1) of timing task analysis code, building upon original versions from the eLife2021 repository.
 
 ## Quick Start
+More detailed instructions available in the original repo [/elife2021](https://github.com/harvardschoolofmouse/eLife2021)
+
 Each figure in Hamilos et al., 2025 includes:
 1. A provenance file specifying required methods
 2. Metadata for reproduction
@@ -23,6 +25,15 @@ To reproduce figures:
 **Associated Publication**:  
 - Hamilos et al., 2025 - *"A mechanism linking dopamine's roles in reinforcement, movement and motivation"*  
   [biorxiv preprint](https://doi.org/10.1101/2025.04.04.647288)
+
+## Matlab dependencies
+- Curve Fitting Toolbox v3.5.8+
+- Statistics and Machine Learning Toolbox v11.4+
+- Signal Processing Toolbox v8.1+
+- Optimization Toolbox v8.2+
+- Image Processing Toolbox v10.3+
+- DSP System Toolbox v9.7+
+- Control System Toolbox v10.5+
 
 ## Datasets
 - **Hamilos et al., 2021 sample data**: [10.5281/zenodo.4062748](https://doi.org/10.5281/zenodo.4062748)
