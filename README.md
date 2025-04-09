@@ -40,14 +40,31 @@ Preparing analyses:
           - 510-end    *Excludes trial 510 till the end of the session*
           - *All other characters will be ignored*
 
-2. Generate analysis objects (sObjs) using 10-trial multibaseline dF/F (Hamilos et al., 2021 and 2025)
+2. Generate analysis objects (sObjs)
+   - Uses 10-trial multibaseline dF/F (Hamilos et al., 2021 and 2025) with photometry signals pooled into 1s bins (specified by 'times', 17) with respect to the cue:
     - For stimulation sessions, select the photometry or movement signal AND ChR2 from the UI list:
       - For Stimulated trials (in STIM directory), use:
-        -  ``` obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim')```
+        -  ```obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim')```
       - For unstimulated trials (in NOSTIM directory), use:
-          -  ``` obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'nostim')```
+          -  ```obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'nostim')```
     -  For no-stum sessions, select just the photometry or movement signal from the UI list:
-          -  ``` obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'off')```
+          -  ```obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'off')```
+    In the outer (Host) folder, a composite obj of all sessions included in the Host folder will be generated with the tag "v3x" in the filename. Meanwhile, single session sObjs will be generated in each folder
+
+4. Visualize composite photometry signals
+   - Open the v3x composite sObj from the Host folder.
+   - Run ```obj.Stim = [];```
+   - To plot a lick-triggered average, run:
+       ```obj.plot('LTA', [bins_to_include], false, smoothing_kernel_in_milliseconds(e.g., 100), 'last-to-first', true),xlim([-2,7]), title(‘SIGNAL NAME (e.g., PHOTOMETRY_INDICATOR, SIGNAL_NAME, stimulated trials only')```
+    - To plot a cue-triggered average, run:
+       ```obj.plot('CTA', [bins_to_include], false, smoothing_kernel_in_milliseconds(e.g., 100), 'last-to-first', true),xlim([-2,7]), title(‘SIGNAL NAME (e.g., PHOTOMETRY_INDICATOR, SIGNAL_NAME, stimulated trials only')```
+  - To plot a cue-and-lick-triggered average, run:
+   ```obj.plot('CLTA', [bins_to_include], false, smoothing_kernel_in_milliseconds(e.g., 100), 'last-to-first', true),xlim([-2,7]), title(‘SIGNAL NAME (e.g., PHOTOMETRY_INDICATOR, SIGNAL_NAME, stimulated trials only')```
+
+5. Generate other analysis objects
+    - Go to the single session folder and run:
+    - ```load_sObj_sloshing_zzt_FX([], true, true)```
+
 
 
 
