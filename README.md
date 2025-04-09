@@ -9,21 +9,21 @@ Instructions: Each figure in Hamilos et al., 2025 contains a provenance file (as
 
 Release version: 2.0.1 | April 9, 2025
 Publications using this version: 
-- Hamilos et al., 2025 - "A mechanism linking dopamine’s roles in reinforcement, movement and motivation" (biorxiv) -- https://doi.org/10.1101/2025.04.04.647288
+    - Hamilos et al., 2025 - "A mechanism linking dopamine’s roles in reinforcement, movement and motivation" (biorxiv) -- https://doi.org/10.1101/2025.04.04.647288
 
 Datasets:
-- Sample raw datasets from Hamilos et al., 2021: 10.5281/zenodo.4062748
-    - These files can be run directly from the Zenodo directories to produce sObjs, from which all analyses are run
-- Additional datasets from Hamilos et al., 2025 will be released via DANDI upon publication. These will be in NWB format and will need to be converted back to .mat files with the proper directory structure for the code below to process them
+    - Sample raw datasets from Hamilos et al., 2021: 10.5281/zenodo.4062748
+        - These files can be run directly from the Zenodo directories to produce sObjs, from which all analyses are run
+    - Additional datasets from Hamilos et al., 2025 will be released via DANDI upon publication. These will be in NWB format and will need to be converted back to .mat files with the proper directory structure for the code below to process them
 
 ---
 Classes included:
 
--- ```sObj``` (CLASS_photometry_roadmapv1_4.m): completes initial processing of single-session and composite session objects using the UI specified photometry signal.
--- ```cObj``` (CLASS_STATcollate_photometry_roadmapv1_4.m): allows collation of single-session data for analyses. Analyses specified in the header. Use #method-name to see associated functions available for each analysis.
--- ```sloshing_obj``` (CLASS_sloshing_obj.m): produces sloshing regression models and analyses
--- ```eps``` (EphysStimPhot.m): produces v2.0 versions of single-session objects, inherits methods from sObj with additional features
--- ```zzt``` (CLASS_ZigZagTimewindows.m): contains methods for block processing in the Timeshift version of the task (Hamilos et al., 2025)
+    - ```sObj``` (CLASS_photometry_roadmapv1_4.m): completes initial processing of single-session and composite session objects using the UI specified photometry signal.
+    - ```cObj``` (CLASS_STATcollate_photometry_roadmapv1_4.m): allows collation of single-session data for analyses. Analyses specified in the header. Use #method-name to see associated functions available for each analysis.
+    -   ```sloshing_obj``` (CLASS_sloshing_obj.m): produces sloshing regression models and analyses
+    -   ```eps``` (EphysStimPhot.m): produces v2.0 versions of single-session objects, inherits methods from sObj with additional features
+    - ```zzt``` (CLASS_ZigZagTimewindows.m): contains methods for block processing in the Timeshift version of the task (Hamilos et al., 2025)
 
 ---
 Preparing analyses:
