@@ -44,23 +44,59 @@ To reproduce figures:
 
 ### 1. Directory Structure
 Required organization:
+```
 For stimulation experiments:
 ├── SHAM
-│ └── [signal_type] (e.g., VLS, VLSred)
-│ └── NAME_SIGNAL_DAY#
+│   └── [signal_type] (e.g., VLS, VLSred)
+│       └── NAME_SIGNAL_DAY#
 ├── STIM
-│ └── [signal_type]
-│ └── NAME_SIGNAL_DAY#
+│   └── [signal_type]
+│       └── NAME_SIGNAL_DAY#
 └── NOSTIM
-└── [signal_type]
-└── NAME_SIGNAL_DAY#
+    └── [signal_type]
+        └── NAME_SIGNAL_DAY#
+```
 
 Each session folder must contain:
 - `NAME_SESSION#_CED.mat` (Spike2 file)
 - `Exclusions_null.txt` (Trial exclusion file)
 - For zzt analyses: `NAME_SESSION#_MBI.mat`
 
+## Exclusion File Syntax
+Format trial exclusions in `Exclusions.txt` as:
+```
+- `4` → Excludes trial 4
+- `4-12` → Excludes trials 4 through 12
+- `4-12,15 17 20` → Excludes trials 4-12,15,17,20
+- `510-end` → Excludes from trial 510 onward
+```
+*Note: Any numbers in the file will be excluded!*
+
 ### 2. Generating sObjs
 **Basic command structure**:
 ```matlab
 obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim_type')
+```
+
+### 3. Visualization
+**Composite object operations**:
+```matlab
+obj.Stim = []; % Clear stimulation data if needed
+
+% Lick-triggered average
+obj.plot('LTA', [bins], false, 100, 'last-to-first', true)
+xlim([-2,7])
+title('Your Signal Description')
+
+% Cue-triggered average
+obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
+
+% Combined cue+lick average
+obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
+```
+
+### 4. Advanced Analyses
+Load specialized objects:
+```matlab
+load_sObj_sloshing_zzt_FX([], true, true)
+```
