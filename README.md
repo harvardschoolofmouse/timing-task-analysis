@@ -43,11 +43,11 @@ Preparing analyses:
 2. Generate analysis objects (sObjs) using 10-trial multibaseline dF/F (Hamilos et al., 2021 and 2025)
     - For stimulation sessions, select the photometry or movement signal AND ChR2 from the UI list:
       - For Stimulated trials (in STIM directory), use:
-        -  ```Matlab obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim')```
+        -  ``` obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim')```
       - For unstimulated trials (in NOSTIM directory), use:
-          -  ```Matlab obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'nostim')```
+          -  ``` obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'nostim')```
     -  For no-stum sessions, select just the photometry or movement signal from the UI list:
-      -  ```Matlab obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'off')```
+          -  ``` obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[], 'off')```
 
 
 
