@@ -36,7 +36,7 @@ To reproduce figures:
 |-------|------|-------------|
 | `sObj` | CLASS_photometry_roadmapv1_4.m | Processes single/composite session objects |
 | `cObj` | CLASS_STATcollate_photometry_roadmapv1_4.m | Collates session data for analysis |
-| `sloshing_obj` | CLASS_sloshing_obj.m | Sloshing regression models |
+| `sloshing_obj` | CLASS_sloshing_model_obj.m | Sloshing regression models |
 | `eps` | EphysStimPhot.m | Enhanced single-session objects (v2.0) |
 | `zzt` | CLASS_ZigZagTimewindows.m | Block processing for Timeshift task |
 
