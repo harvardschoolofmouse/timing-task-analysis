@@ -77,21 +77,22 @@ Format trial exclusions in `Exclusions.txt` as:
 ```matlab
 obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim_type')
 ```
+*stim_type = 'stim' (uses stimulated trials only), 'nostim' (uses unstimulated trials only), 'off' (uses all trials)
 
 ### 3. Visualization
 **Composite object operations**:
 ```matlab
-obj.Stim = []; % Clear stimulation data if needed
+obj.Stim = []; % This field is vestigial, remove it before using the composite sObj
 
 % Lick-triggered average
-obj.plot('LTA', [bins], false, 100, 'last-to-first', true)
+obj.plot('LTA', [bins], false, [smoothing_kernel_milliseconds], 'last-to-first', true)
 xlim([-2,7])
 title('Your Signal Description')
 
 % Cue-triggered average
 obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
 
-% Combined cue+lick average
+% Combined cue+lick-triggered average
 obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
 ```
 
