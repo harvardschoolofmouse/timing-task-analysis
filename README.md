@@ -18,7 +18,6 @@ Datasets:
 
 ---
 Classes included:
-
     * ```sObj``` (CLASS_photometry_roadmapv1_4.m): completes initial processing of single-session and composite session objects using the UI specified photometry signal.
 
     * ```cObj``` (CLASS_STATcollate_photometry_roadmapv1_4.m): allows collation of single-session data for analyses. Analyses specified in the header. Use #method-name to see associated functions available for each analysis.
