@@ -34,6 +34,8 @@ To reproduce figures:
 - Image Processing Toolbox v10.3+
 - DSP System Toolbox v9.7+
 - Control System Toolbox v10.5+
+- Lansey, Jonathan, 2013: linspecer.m - Matlab toolbox for creating optimal color schemes for plot visualizations.
+- Hoffmann H, 2015: violin.m - Simple violin plot using matlab default kernel density estimation. INRES (University of Bonn), Katzenburgweg 5, 53115 Germany.
 
 ## Datasets
 - **Hamilos et al., 2021 sample data**: [10.5281/zenodo.4062748](https://doi.org/10.5281/zenodo.4062748)
