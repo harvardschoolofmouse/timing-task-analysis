@@ -86,7 +86,7 @@ Load specialized objects: go to the session folder (e.g., the uncompressed B5_SN
 ```matlab
 [sObj, sloshing_obj, zzt] = load_sObj_sloshing_zzt_FX([], true, true)
 ```
-Run the "sloshing" GLM:
+Run the single session, single-trial "sloshing" GLM:
 ```matlab
 sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms after the first lick
 [Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
