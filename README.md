@@ -10,7 +10,7 @@ For code usage or troubleshooting, please reach out - our team will be happy to 
 Contains the latest release (v2.0.1) of timing task analysis code, building upon original versions from the eLife2021 repository.
 
 ## Quick Start
-More detailed instructions available in the original repo [/elife2021](https://github.com/harvardschoolofmouse/eLife2021)
+More detailed instructions available in the original repo [/elife2021](https://github.com/harvardschoolofmouse/eLife2021). Installation time for all software (e.g., Matlab) -- approx 10 min.
 
 Each figure in Hamilos et al., 2025 includes:
 1. A provenance file specifying required methods
