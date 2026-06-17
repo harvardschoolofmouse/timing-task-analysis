@@ -44,9 +44,6 @@ To reproduce figures:
   - Will be released via DANDI in NWB format
   - Requires conversion to .mat with proper directory structure
 
-### Demo Instructions:
-
-
 ## Classes Overview
 | Class | File | Description |
 |-------|------|-------------|
@@ -88,10 +85,10 @@ Expected output:
 <img width="200" height="333" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
 
 
-## Setup Instructions -- If you're making a new dataset
+## How to generate sObj analysis object from raw datasets
 
 ### 1. Directory Structure
-Required organization:
+Required file organization:
 ```
 For stimulation experiments:
 ├── SHAM
@@ -110,7 +107,7 @@ Each session folder must contain:
 - `Exclusions_null.txt` (Trial exclusion file)
 - For zzt analyses: `NAME_SESSION#_MBI.mat`
 
-#### Exclusion File Syntax
+### Exclusion File Syntax
 Format trial exclusions in `Exclusions.txt` as:
 ```
 - `4` → Excludes trial 4
