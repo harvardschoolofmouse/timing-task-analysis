@@ -51,6 +51,8 @@ To reproduce figures:
 ## Datasets
 - **Hamilos et al., 2021 sample data**: [10.5281/zenodo.4062748](https://doi.org/10.5281/zenodo.4062748)
   - Directly compatible with this code
+- **Small sample dataset for reviewers**: [https://www.dropbox.com/scl/fi/x3ypj4vwyxi53zyvy6xro/B5_SNc_13.zip?rlkey=q3eyyvnp96ozjqqqdhaoontr2&dl=0]
+  - Directly compatible with this code. Contains one GCaMP6f recording session from mouse B5 at SNc. See Demo below
 - **Hamilos et al., 2025 data** (coming soon):
   - Will be released via DANDI in NWB format
   - Requires conversion to .mat with proper directory structure
