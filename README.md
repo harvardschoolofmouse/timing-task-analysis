@@ -145,4 +145,5 @@ sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms 
 [Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
 ```
 Expected output:
-<img width="511" height="850" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
+
+<img width="200" height="333" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
