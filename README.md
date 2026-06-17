@@ -135,9 +135,9 @@ obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
 ```
 
 ### 4. Advanced Analyses
-Load specialized objects:
+Load specialized objects: go to the session folder (e.g., B5_SNc_13 and run the following to extract all analysis objects
 ```matlab
-load_sObj_sloshing_zzt_FX([], true, true)
+[sObj, sloshing_obj, zzt] = load_sObj_sloshing_zzt_FX([], true, true)
 ```
 Run the basic "sloshing" GLM:
 ```matlab
