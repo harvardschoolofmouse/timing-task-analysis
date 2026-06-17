@@ -134,7 +134,7 @@ obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
 obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
 ```
 
-### 4. Advanced Analyses
+### 4. Demo Analysis
 Load specialized objects: go to the session folder (e.g., B5_SNc_13 and run the following to extract all analysis objects
 ```matlab
 [sObj, sloshing_obj, zzt] = load_sObj_sloshing_zzt_FX([], true, true)
@@ -144,3 +144,5 @@ Run the basic "sloshing" GLM:
 sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms after the first lick
 [Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
 ```
+Expected output:
+<img width="511" height="850" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
