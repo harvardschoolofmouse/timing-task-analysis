@@ -2944,7 +2944,6 @@ classdef CLASS_sloshing_model_obj < handle
             LTAs_back = all_LTAs_back(teb);
         end
         function [Name,mdls,f] = runNTrialsBackModel(obj,Mode,normalizeX,useMask, stimOnly, Early_or_Rew_conditioning, ntrialsback, PooledMode)
-            warning('I tested this to look for n-1 effects ONLY on b0+DA+DA_minus_1 for B5_SNc_13. I didnt find much so I didn''t fully debug these. Address the warnings by checking stuff if you want to use this in future - 5/23/26, R-2 revision comments for n-1 effects')
             % 
             %   ntrialsback is a vector of the number of trials back we wanna fit with. default should include 
             %                   trial n (the standard model), n-1 and n-2 predicting on change from n to n+1 = [0,1,2]
@@ -3137,7 +3136,7 @@ classdef CLASS_sloshing_model_obj < handle
             
             Name = [obj.iv.sessionCode, ' ' Mode, ' fits, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's ' Early_or_Rew_conditioning];
             if iscell(Name), Name=cell2mat(Name);end
-            set(f, 'name', Name); 
+            set(f, 'name', Name, 'position', [0.5820    0.0204    0.3743    0.8320]); 
             set(f, 'userdata', ['[Name,mdls] = runNTrialsBackModel(sloshing_obj,Mode=' Mode ',normalizeX=' num2str(normalizeX) ',useMask=' num2str(useMask) ', stimOnly=' num2str(stimOnly) ', Early_or_Rew_conditioning' Early_or_Rew_conditioning ', ntrialsback=' mat2str(ntrialsback) ', PooledMode=' num2str(PooledMode) ')' '\n\n' getUserDataStandards(obj)])
         end
         function copyAxisChildren(obj,ax_src, ax_recepient)
