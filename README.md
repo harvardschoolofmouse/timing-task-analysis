@@ -44,6 +44,9 @@ To reproduce figures:
   - Will be released via DANDI in NWB format
   - Requires conversion to .mat with proper directory structure
 
+### Demo Instructions:
+
+
 ## Classes Overview
 | Class | File | Description |
 |-------|------|-------------|
@@ -53,7 +56,39 @@ To reproduce figures:
 | `eps` | EphysStimPhot.m | Enhanced single-session objects (v2.0) |
 | `zzt` | CLASS_ZigZagTimewindows.m | Block processing for Timeshift task |
 
-## Setup Instructions
+
+## Demo Analysis Instructions
+Sample dataset contents: Mouse B5, SNc GCaMP6f, day 13 of recording (B5_SNc_13 from the Zenodo dataset)
+
+```
+├── MOUSENAME_SIGNAL_RECORDINGDAY#
+│   └── exclusions_file.txt      contains any trials excluded for rare grooming-touches of the spout
+│   └── CED file                 raw dataset from CED acquisition system
+│   └── sObj                     processed raw data packaged for analysis (this is made using the sObj constructor, below)
+
+EXAMPLE DATASET:
+├── B5_SNc_13
+│   └── B5_exclusions_13.txt           Exclusions file
+│   └── b5_day13_hybop0.mat            raw CED dataset
+│   └── b5_SNc_13_REVISED_sObj.mat     sObj for this session. REVISED tag indicates software version
+
+```
+## Demo Analysis
+Load specialized objects: go to the session folder (e.g., B5_SNc_13 and run the following to extract all analysis objects
+```matlab
+[sObj, sloshing_obj, zzt] = load_sObj_sloshing_zzt_FX([], true, true)
+```
+Run the "sloshing" GLM:
+```matlab
+sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms after the first lick
+[Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
+```
+Expected output:
+
+<img width="200" height="333" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
+
+
+## Setup Instructions -- If you're making a new dataset
 
 ### 1. Directory Structure
 Required organization:
@@ -75,7 +110,7 @@ Each session folder must contain:
 - `Exclusions_null.txt` (Trial exclusion file)
 - For zzt analyses: `NAME_SESSION#_MBI.mat`
 
-## Exclusion File Syntax
+#### Exclusion File Syntax
 Format trial exclusions in `Exclusions.txt` as:
 ```
 - `4` → Excludes trial 4
@@ -85,65 +120,10 @@ Format trial exclusions in `Exclusions.txt` as:
 ```
 *Note: Any numbers in the file will be excluded!*
 
-### 2. Generating sObjs
+### To generate analysis objects from scratch (sObjs):
 **Basic command structure**:
 ```matlab
 obj = CLASS_photometry_roadmapv1_4('v3x','times',17,{'multibaseline',10},30000,[],[],'stim_type')
 ```
 *stim_type = 'stim' (uses stimulated trials only), 'nostim' (uses unstimulated trials only), 'off' (uses all trials)
 
-### 3. Visualization
-**Composite object operations**:
-```matlab
-obj.Stim = []; % This field is vestigial, remove it before using the composite sObj
-
-% Lick-triggered average
-obj.plot('LTA', [bins], false, [smoothing_kernel_milliseconds], 'last-to-first', true)
-xlim([-2,7])
-title('Your Signal Description')
-
-% Cue-triggered average
-obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
-
-% Combined cue+lick-triggered average
-obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
-```
-
-**Individual session operations**:
-```matlab
-% All signals are stored in the sObj.GLM field. There are many plotting tools available--see the /eLife2021 repo for details
-%   gfit: dF/F DA signal
-%   tdt: red control channel
-%   gX: accelerometer
-%   gEMG: rectified neck EMG
-
-% Execute pooling of trials (or specify single trials) for plotting
-obj.getBinnedTimeseries(obj.GLM.gfit, 'times', 17, 30000); % bin the dF/F signal into pools of 1s each for plotting
-% or
-obj.getBinnedTimeseries(obj.GLM.gfit, 'singletrial', 1, 30000); % gather single trials for plotting
-
-% Lick-triggered average
-obj.plot('LTA', [bins], false, [smoothing_kernel_milliseconds], 'last-to-first', true); % suggested bins: 'all', smoothing: 100
-xlim([-2,7])
-title('Your Signal Description')
-
-% Cue-triggered average
-obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
-
-% Combined cue+lick-triggered average
-obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
-```
-
-### 4. Demo Analysis
-Load specialized objects: go to the session folder (e.g., B5_SNc_13 and run the following to extract all analysis objects
-```matlab
-[sObj, sloshing_obj, zzt] = load_sObj_sloshing_zzt_FX([], true, true)
-```
-Run the "sloshing" GLM:
-```matlab
-sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms after the first lick
-[Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
-```
-Expected output:
-
-<img width="200" height="333" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
