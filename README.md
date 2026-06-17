@@ -139,3 +139,7 @@ Load specialized objects:
 ```matlab
 load_sObj_sloshing_zzt_FX([], true, true)
 ```
+Run the basic "sloshing" GLM:
+```matlab
+[Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
+```
