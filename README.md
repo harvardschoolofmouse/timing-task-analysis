@@ -73,7 +73,7 @@ Sample dataset contents: Mouse B5, SNc GCaMP6f, day 13 of recording (B5_SNc_13 f
 ```
 ├── MOUSENAME_SIGNAL_RECORDINGDAY#
 │   └── exclusions_file.txt      contains any trials excluded for rare grooming-touches of the spout
-│   └── CED file                 raw dataset from CED acquisition system
+│   └── CED file                 raw dataset from CED acquisition system--feel free to process this with your own preferred dF/F, etc
 │   └── sObj                     processed raw data packaged for analysis (this is made using the sObj constructor, below)
 
 EXAMPLE DATASET:
