@@ -91,9 +91,10 @@ Run the single session, single-trial "sloshing" GLM:
 sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms after the first lick
 [Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
 ```
-Expected output:
+Expected output: Plots of the regression model, coefficients, and the Matlab fitglm regression object, which contains all data and statistics from the model:
 
 <img width="200" height="333" alt="image" src="https://github.com/user-attachments/assets/21524872-6bbf-411e-922c-241df6542cca" />
+<img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/7a65ab7f-3eae-4ce2-b0ef-1e9be03064dc" />
 
 
 ## How to generate sObj analysis object from raw datasets
