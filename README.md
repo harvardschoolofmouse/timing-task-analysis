@@ -109,6 +109,31 @@ obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
 obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
 ```
 
+**Individual session operations**:
+```matlab
+% All signals are stored in the sObj.GLM field. There are many plotting tools available--see the /eLife2021 repo for details
+%   gfit: dF/F DA signal
+%   tdt: red control channel
+%   gX: accelerometer
+%   gEMG: rectified neck EMG
+
+% Execute pooling of trials (or specify single trials) for plotting
+obj.getBinnedTimeseries(obj.GLM.gfit, 'times', 17, 30000); % bin the dF/F signal into pools of 1s each for plotting
+% or
+obj.getBinnedTimeseries(obj.GLM.gfit, 'singletrial', 1, 30000); % gather single trials for plotting
+
+% Lick-triggered average
+obj.plot('LTA', [bins], false, [smoothing_kernel_milliseconds], 'last-to-first', true); % suggested bins: 'all', smoothing: 100
+xlim([-2,7])
+title('Your Signal Description')
+
+% Cue-triggered average
+obj.plot('CTA', [bins], false, 100, 'last-to-first', true)
+
+% Combined cue+lick-triggered average
+obj.plot('CLTA', [bins], false, 100, 'last-to-first', true)
+```
+
 ### 4. Advanced Analyses
 Load specialized objects:
 ```matlab
