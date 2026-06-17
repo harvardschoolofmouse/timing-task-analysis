@@ -29,6 +29,7 @@ To reproduce figures:
 
 ### Installation Guide
 **Operating Systems**: Windows 10+, MacOS Sonoma 14.5
+
 **Matlab Version**: 2023B
 
 1. Download Matlab 2023B from the Mathworks website.
