@@ -99,7 +99,7 @@ Expected output: Plots of the regression model, coefficients, and the Matlab fit
 <img width="200" height="275" alt="image" src="https://github.com/user-attachments/assets/7a65ab7f-3eae-4ce2-b0ef-1e9be03064dc" />
 
 
-## How to generate sObj analysis objects from raw datasets
+## How to generate sObj analysis objects from raw datasets in the Zenodo repository
 
 ### 1. Directory Structure
 Required file organization:
