@@ -141,5 +141,6 @@ Load specialized objects: go to the session folder (e.g., B5_SNc_13 and run the 
 ```
 Run the basic "sloshing" GLM:
 ```matlab
+sloshing_obj.resetLTA(0,500); % sets the window for consideration to be 0-500ms after the first lick
 [Name,mdls] = runNTrialsBackModel(sloshing_obj,'LTA-&-EMG-&-tdt',true,true, false, 'none', 0, false)
 ```
