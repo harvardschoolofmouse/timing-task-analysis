@@ -83,12 +83,14 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
                 obj.iv.sessionCode = [obj.iv.mousename_ '_' obj.iv.signalname_ '_' obj.iv.daynum_];
             end
             obj.ephysAlerts;
-            obj.alert(['*' mat2str(obj.iv.ephysAlerts.info)], '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            obj.alert(['*' mat2str(obj.iv.ephysAlerts.info)], ['             EphysStimPhot, ' obj.iv.versionCode ' \n'])
-            obj.alert('info', '            "We''ve got the spikes" ')
-            disp(' ')
-            obj.alert('info', '       (c) Harvard School of Mouse, 2023 ')
-            obj.alert(['*' mat2str(obj.iv.ephysAlerts.info)], '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            if nargin < 3
+                obj.alert(['*' mat2str(obj.iv.ephysAlerts.info)], '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                obj.alert(['*' mat2str(obj.iv.ephysAlerts.info)], ['             EphysStimPhot, ' obj.iv.versionCode ' \n'])
+                obj.alert('info', '            "We''ve got the spikes" ')
+                disp(' ')
+                obj.alert('info', '       (c) Harvard School of Mouse, 2023 ')
+                obj.alert(['*' mat2str(obj.iv.ephysAlerts.info)], '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            end
             % import data
             if fetchSpikes
                     try
@@ -115,10 +117,11 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
                 obj.alert('achtung','EphysStimPhot obj initialized but NOT saved yet.')
             end
             % save the obj
-            
-            disp(' ')
-            obj.alert('info', ['    (' datestr(now,'mm/dd/yyyy HH:MM AM') ') EphysStimPhot Session Initialized.']);
-            obj.alert('info', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+            if nargin < 3
+                disp(' ')
+                obj.alert('info', ['    (' datestr(now,'mm/dd/yyyy HH:MM AM') ') EphysStimPhot Session Initialized.']);
+                obj.alert('info', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+            end
             % obj.save();
         end
         function save(obj, ss, tr)
@@ -2352,8 +2355,9 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
             % now, get the lick time of the valids...
             ntrialsforwardflicks(idx_to_get-n) = flickswrtc(idx_to_get);
         end
-        function [pvalue, test_stat, influence] = slosh_emery_boot_test(obj,nboot,excludeITI_prevtrial,excludeITI_nexttrial,ntrialsforward, Plot,runCrossSeshVersion)
-            if nargin < 7, runCrossSeshVersion = false;end
+        function [pvalue, test_stat, influence] = slosh_emery_boot_test(obj,nboot,excludeITI_prevtrial,excludeITI_nexttrial,ntrialsforward, Plot,runCrossSeshVersion, get_p_value_for_early1_rew2_all0)
+            if nargin < 8, get_p_value_for_early1_rew2_all0 = 0;end % use all trials
+            if nargin < 7 || isempty(runCrossSeshVersion), runCrossSeshVersion = false;end
             if nargin < 6, Plot=true;end
             if nargin < 5, ntrialsforwardflicks = 1;end
             if nargin < 4, excludeITI_nexttrial = true; end
@@ -2460,14 +2464,18 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
             end
 
             influence.mean_stim_early = nanmean(stim_del_lick_time(prev_trial<=3.3));
+            influence.n_stim_early = sum(~isnan(stim_del_lick_time(prev_trial<=3.3)));
             influence.mean_nostim_early = nanmean(nostim_del_lick_time(prev_trial<=3.3));
+            influence.n_nostim_early = sum(~isnan(nostim_del_lick_time(prev_trial<=3.3)));
             if Plot
                 disp(['mean stim influence | stim was early ' num2str(influence.mean_stim_early)])
                 disp(['mean NO stim influence | NO stim was early ' num2str(influence.mean_nostim_early)])
             end
 
             influence.mean_stim_reward = nanmean(stim_del_lick_time(prev_trial>=3.3 & prev_trial<=7));
+            influence.n_stim_reward = sum(~isnan(stim_del_lick_time(prev_trial>=3.3 & prev_trial<=7)));
             influence.mean_nostim_reward = nanmean(nostim_del_lick_time(prev_trial>=3.3  & prev_trial<=7));
+            influence.n_nostim_reward = sum(~isnan(nostim_del_lick_time(prev_trial>=3.3  & prev_trial<=7)));
             if Plot
                 disp(['mean stim influence | stim was rew ' num2str(influence.mean_stim_reward)])
                 disp(['mean NO stim influence | NO stim was rew ' num2str(influence.mean_nostim_reward)])
@@ -2507,6 +2515,15 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
             %     boot_stat_del(ii) = boot_stat_stim(ii) - boot_stat_nostim(ii);
             % end
 
+            if get_p_value_for_early1_rew2_all0 >0
+                if get_p_value_for_early1_rew2_all0 == 1
+                    obj.alert('info', 'getting p value for deldel only for EARLY trials (BASED ON OG MBI HMS PARAMS!)')
+                elseif get_p_value_for_early1_rew2_all0 == 2
+                    obj.alert('info', 'getting p value for deldel only for REWARDED trials (BASED ON OG MBI HMS PARAMS!)')
+                else
+                    error('undefined!!! get_p_value_for_early1_rew2_all0 can be 0, 1 or 2!')
+                end
+            end
             
             % let's try doing this within a session:
              for nn = 1:nboot
@@ -2517,6 +2534,13 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
                 for seshNo = 1:numel(seshs)
                     ii = seshs(seshNo);
                     prev_trial_thissesh = obj.GLM.flick_s_wrtc(obj.GLM.seshNoIdx == ii);
+                    % here we can do conditioning
+                    if get_p_value_for_early1_rew2_all0 == 1 && prev_trial_thissesh > 3.333
+                        prev_trial_thissesh = nan;
+                    elseif get_p_value_for_early1_rew2_all0 == 2 && (prev_trial_thissesh < 3.333 || prev_trial_thissesh > 7)
+                        prev_trial_thissesh = nan;
+                    end
+
                     % handle EOT:
                     if excludeITI_prevtrial
                         prev_trial_thissesh(prev_trial_thissesh > EOT) = nan;
@@ -2588,7 +2612,13 @@ classdef EphysStimPhot < CLASS_photometry_roadmapv1_4
                     xlabel(ax(1), 'mean del stim - no stim, including ITI')
                 end
                 ylabel(ax(1), 'p')
-                title(ax(1), ['p = ' num2str(pvalue)])
+                if get_p_value_for_early1_rew2_all0 == 0
+                    title(ax(1), ['p = ' num2str(pvalue)])
+                elseif get_p_value_for_early1_rew2_all0 == 1
+                    title(ax(1), ['p EARLY TRIAL deldel = ' num2str(pvalue)])
+                elseif get_p_value_for_early1_rew2_all0 == 2
+                    title(ax(1), ['p REWARDED TRIAL deldel = ' num2str(pvalue)])
+                end
             end
         end
         function [h_stim, h_sham] = slosh_comparecdf(obj_a, obj_s, exclude_ITI, Mode, nameA, nameS)

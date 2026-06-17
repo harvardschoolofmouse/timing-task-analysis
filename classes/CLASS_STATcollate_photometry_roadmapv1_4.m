@@ -206,7 +206,13 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 			%						- 'plot-RPE-trial-order' -- just plots the RPE downtrend dot plot and saves
 			%							n -- nothing means take gfit
 			%							n = 'tdt' -- tags we want for tdt
-			%							
+			% 
+			% 						- 'plot_ntrials_in_category_LTA' -- gathers single trial data within a category to allow flexible LTA plotting comparisons across sObjs
+			%								n = {trialrange = 200:400, trials2getfromrangeincategory = [1,20], binning_s = [3.333,7]}
+			% 
+			% 								obj = CLASS_STATcollate_photometry_roadmap1_4('plot_ntrials_in_category_LTA',...
+			%										{200:400, [1,20], [3.333,7]}
+			% 
 			% 
 			obj.iv.runID = randi(10000);
 			obj.iv.versionCode = ['CLASS_STATcollate_photometry_roadmapv1_4 v1.0 Modified 11-5-20 15:45 | obj created: ' datestr(now)];
@@ -278,7 +284,7 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
             hostFolder = uigetdir('', 'Select the HOST Folder for Collation');
             obj.iv.hostFolder = hostFolder;
             obj.iv.suppressNsave = [];
-            if ~strcmpi(obj.iv.collateKey, 'run_timeshift_variables_TEST') && ~strcmpi(obj.iv.collateKey, 'rewrite_path') && ~strcmpi(obj.iv.collateKey,'baselineANOVAidx') && ~strcmpi(obj.iv.collateKey, 'nTrialsWithFLick') && ~strcmpi(obj.iv.collateKey, 'nTrialsWithFLick-humanz') && ~strcmpi(obj.iv.collateKey,'ht') && ~strcmpi(obj.iv.collateKey,'vt') && ~strcmpi(obj.iv.collateKey,'rim')
+            if ~strcmpi(obj.iv.collateKey, 'run_timeshift_variables_TEST') &&  ~strcmpi(obj.iv.collateKey, 'rewrite_path') && ~strcmpi(obj.iv.collateKey,'baselineANOVAidx') && ~strcmpi(obj.iv.collateKey, 'nTrialsWithFLick') && ~strcmpi(obj.iv.collateKey, 'nTrialsWithFLick-humanz') && ~strcmpi(obj.iv.collateKey,'ht') && ~strcmpi(obj.iv.collateKey,'vt') && ~strcmpi(obj.iv.collateKey,'rim')
                 cd(hostFolder)
             	filesax = dir;
             	dirFlagsax = [filesax.isdir];
@@ -286,7 +292,7 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
             	name = {Foldersax(3:end).name};
 				folder = {Foldersax(3:end).folder};
             	
-            	if strcmpi(obj.iv.collateKey, 'grabMoveControls') || strcmpi(obj.iv.collateKey, 'shuffle_residual_refit') || strcmpi(obj.iv.collateKey, 'reward_RPE_amplitudes') || strcmpi(obj.iv.collateKey, 'cdf') || strcmpi(obj.iv.collateKey, 'cdf-humanz') || strcmpi(obj.iv.collateKey, 'nTrialsWithFLick-humanz') || strcmpi(obj.iv.collateKey, 'loivsflick') || strcmpi(obj.iv.collateKey, 'PCAbehavior')
+            	if strcmpi(obj.iv.collateKey, 'grabMoveControls') || strcmpi(obj.iv.collateKey, 'plot_ntrials_in_category_LTA') || strcmpi(obj.iv.collateKey, 'shuffle_residual_refit') || strcmpi(obj.iv.collateKey, 'reward_RPE_amplitudes') || strcmpi(obj.iv.collateKey, 'cdf') || strcmpi(obj.iv.collateKey, 'cdf-humanz') || strcmpi(obj.iv.collateKey, 'nTrialsWithFLick-humanz') || strcmpi(obj.iv.collateKey, 'loivsflick') || strcmpi(obj.iv.collateKey, 'PCAbehavior')
             		obj.iv.suppressNsave.cdf = hostFolder;
         		elseif strcmpi(obj.iv.collateKey, 'extract_trial_CSV')
         			disp('	Select the folder to save collated CSVs for all sessions')
@@ -759,7 +765,12 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 						elseif strcmpi(obj.iv.collateKey, 'rewrite_path') 
 							result.nada = [];
 							%pass
-
+						elseif strcmpi(obj.iv.collateKey, 'plot_ntrials_in_category_LTA')
+							obj.collatedResults(iset).trialrange = n{1};
+							obj.collatedResults(iset).trials2getfromrangeincategory = n{2};
+							obj.collatedResults(iset).binning_s = n{3};
+							obj.collatedResults(iset).ts = result.ts;
+							obj.collatedResults(iset).plottingPacket = result.plottingPacket;
 						elseif strcmpi(obj.iv.collateKey, 'pull_pre_and_post_training_rpe')
 							obj.collatedResults(iset).pre = result.pre;
 							obj.collatedResults(iset).session = result.session;
@@ -862,6 +873,7 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 	                    	obj.collatedResults(iset).lick_s = result.result.lick_s;
 	                    	obj.collatedResults(iset).f_lick_ex_s_wrtref = result.result.f_lick_ex_s_wrtref;
 	                    	obj.collatedResults(iset).rb_s = result.result.rb_ms/1000;
+	                    	obj.collatedResults(iset).longITI_all_flicks_s_wrtc = result.longITI_all_flicks_s_wrtc;
                     	elseif strcmpi(obj.iv.collateKey, 'cdf-humanz')
                     		obj.collatedResults(iset).run_id = result.run_id;
 							obj.collatedResults(iset).beginner_flickswrtc = result.beginner_flickswrtc;
@@ -1224,6 +1236,7 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 				% 	Will work for an object with any kind of signal
 				% 
 				[result.ecdf_f, result.ecdf_x, result.result] = sObj.getCDFAnalysis(0, obj.iv.runID, obj.iv.suppressNsave.cdf);
+				result.longITI_all_flicks_s_wrtc = sObj.GLM.flick_s_wrtc;
 			elseif strcmpi(collateKey, 'intermittent_recording_downtrend_regression')
 				process_bleaching_control_sessions_COLLATE
 
@@ -1598,6 +1611,23 @@ classdef CLASS_STATcollate_photometry_roadmapv1_4 < handle
 				sObj.getSeshName;
 				sObj.save;
 				result = [];
+			elseif strcmpi(collateKey, 'plot_ntrials_in_category_LTA')
+				trialrange = n{1};%200:400;
+				trials2getfromrangeincategory = n{2};%[1,20];
+				binning_s = n{3};%[3.333,7];
+
+				sObj.getBinnedTimeseries(sObj.GLM.gfit, 'first-ntrials-singletrial', {trials2getfromrangeincategory, binning_s}, 10000, trialrange);
+
+				result.ts = sObj.ts;
+				result.plottingPacket.signaltype_ = obj.iv.signaltype_;
+				result.plottingPacket.s = obj.iv.Plot.wrtCue.Events.s;
+				result.plottingPacket.filename_ = obj.iv.filename_;
+				result.plottingPacket.setStyle = obj.iv.setStyle;
+				result.plottingPacket.signalname = obj.iv.signalname;
+				result.plottingPacket.exptype_ = obj.iv.exptype_;
+				result.plottingPacket.rxnwin_ = obj.iv.rxnwin_;
+				result.plottingPacket.num_trials = obj.iv.num_trials;
+				result.plottingPacket.num_trials_category = obj.iv.num_trials_category;
 			elseif strcmpi(collateKey, 'pull_pre_and_post_training_rpe')
 				% 
 				% 	First, find the session's data

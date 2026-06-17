@@ -1,9 +1,20 @@
 classdef CLASS_sloshing_model_obj < handle
 	% 
 	% 	Created 	11/21/21	ahamilos
-	% 	Modified 	ahamilos    4/9/2025       versionCode = 'v2.0.1'
+	% 	Modified 	12/5/23	  VERSION CODE: ['CLASS_sloshing_model_obj v2.0 Modified 7-18-23 | obj created: ' datestr(now)];
 	% 
+	% 	VERSION CODE HISTORY
+	%       based on absflick_vs_delta_testing.m and sloshing_model_test.m,
+	%       which are in the Lab Notebook (ppt)>2022 Nov 16 Sloshing
+	%       Dopamine Model folder (Dropbox)
     % 
+    %   v2.0:
+    %       7-18-23: added ability to look at cue-aligned
+    %       6-13-23: updated glmfit to fitglm for all the major models except nested time model. 
+    %                   noticed the rails rsq is still overestimated with my rsq method, 
+    %                   not sure why. we never use rails signal, and this issue appears 
+    %                   fixed now. use fitglm going forward
+    %       - added capability to take composite sObjs now that we keep track of the lick times in each bin...
 	% 
 	properties
 		iv
@@ -239,7 +250,7 @@ classdef CLASS_sloshing_model_obj < handle
                     lick_time = [sObj.ts.BinParams.s.CLTA_Max]';
                 elseif ~obj.iv.compositeMode
                     % take the average lick time in the bin
-    %                 lick_time = cell2mat(cellfun(@(x) mean(sObj.GLM.flick_s_wrtc(x)), sObj.ts.BinParams.trials_in_each_bin, 'uniformoutput', false));
+    %               lick_time = cell2mat(cellfun(@(x) mean(sObj.GLM.flick_s_wrtc(x)), sObj.ts.BinParams.trials_in_each_bin, 'uniformoutput', false));
                     next_trial = cellfun(@(x)x+1,sObj.ts.BinParams.trials_in_each_bin, 'uniformoutput',0);
                     next_trial_is_ok = cellfun(@(x) ~isnan(sObj.GLM.flick_s_wrtc(x)), next_trial, 'uniformoutput',0);
                     next_trial_is_ok = cellfun(@(x) zero2nan(double(x)), next_trial_is_ok, 'uniformoutput',0);
@@ -253,6 +264,7 @@ classdef CLASS_sloshing_model_obj < handle
                     lick_time = cell2mat(cellfun(@(x) nanmean(x),sObj.ts.BinParams.lick_times_in_each_bin, 'uniformoutput', 0));
                 end
             end
+
             rews = find(lick_time >= 3.333 & lick_time < 7);
             if obj.iv.includeRxnsAsEarly 
                 early = find(lick_time < 3.33);
@@ -284,6 +296,8 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), smoothedLTA, 'uniformoutput', 0));
                 medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), smoothedLTA, 'uniformoutput', 0));
+
+                sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), smoothedLTA, 'uniformoutput', 0));%./(RPEwin+1);
                 % map this back to the trial order so we can predict behavior on next trial
                 if ~obj.iv.compositeMode && strcmpi(BinningMode{1}, 'singletrial')
                     if isfield(obj.iv, 'stimTrials')
@@ -342,6 +356,7 @@ classdef CLASS_sloshing_model_obj < handle
                     % prep mean/median signals
                     obj.LTA.EMG.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), EMG_LTA, 'uniformoutput', 0));
                     obj.LTA.EMG.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), EMG_LTA, 'uniformoutput', 0));
+                    obj.LTA.EMG.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), EMG_LTA, 'uniformoutput', 0));%./(RPEwin+1);
                     % assign RPE to each trial: (note this means RAILS signal)
                     obj.LTA.EMG.RPE = nan(numel(lick_time_next_trial),1);
                     obj.LTA.EMG.RPE(rews) = obj.LTA.EMG.maxs(rews);
@@ -363,6 +378,8 @@ classdef CLASS_sloshing_model_obj < handle
                     % prep mean/median signals
                     obj.LTA.X.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), X_LTA, 'uniformoutput', 0));
                     obj.LTA.X.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), X_LTA, 'uniformoutput', 0));
+                    % get integral
+                    obj.LTA.X.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), X_LTA, 'uniformoutput', 0));%./(RPEwin+1);
                     % assign RPE to each trial: (note this means RAILS signal)
                     obj.LTA.X.RPE = nan(numel(lick_time_next_trial),1);
                     obj.LTA.X.RPE(rews) = obj.LTA.X.maxs(rews);
@@ -384,6 +401,7 @@ classdef CLASS_sloshing_model_obj < handle
                     % prep mean/median signals
                     obj.LTA.tdt.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), tdt_LTA, 'uniformoutput', 0));
                     obj.LTA.tdt.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), tdt_LTA, 'uniformoutput', 0));
+                    obj.LTA.tdt.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), tdt_LTA, 'uniformoutput', 0));%./(RPEwin+1);
                     % assign RPE to each trial: (note this means RAILS signal)
                     obj.LTA.tdt.RPE = nan(numel(lick_time_next_trial),1);
                     obj.LTA.tdt.RPE(rews) = obj.LTA.tdt.maxs(rews);
@@ -408,6 +426,7 @@ classdef CLASS_sloshing_model_obj < handle
             obj.LTA.RPE = RPE;
             obj.LTA.means = means;
             obj.LTA.medians = medians;
+            obj.LTA.sums = sums;
             obj.LTA.trials_in_each_bin = trials_in_each_bin;
             obj.LTA.next_trial = next_trial;
             obj.LTA.log_lick_time_next_trial = log_lick_time_next_trial;
@@ -444,6 +463,7 @@ classdef CLASS_sloshing_model_obj < handle
             % prep mean/median signals
             obj.LTA.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), smoothedLTA, 'uniformoutput', 0));
             obj.LTA.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), smoothedLTA, 'uniformoutput', 0));
+            obj.LTA.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), smoothedLTA, 'uniformoutput', 0));%./(RPEwin+1);
             % assign RPE to each trial: (note this means RAILS signal)
             obj.LTA.RPE = nan(numel(lick_time_next_trial),1);
             obj.LTA.RPE(rews) = obj.LTA.maxs(rews);
@@ -469,6 +489,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LTA.X.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), X_LTA, 'uniformoutput', 0));
                 obj.LTA.X.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), X_LTA, 'uniformoutput', 0));
+                obj.LTA.X.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), X_LTA, 'uniformoutput', 0));%./(RPEwin+1);
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LTA.X.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LTA.X.RPE(rews) = obj.LTA.X.maxs(rews);
@@ -482,6 +503,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LTA.tdt.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), tdt_LTA, 'uniformoutput', 0));
                 obj.LTA.tdt.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), tdt_LTA, 'uniformoutput', 0));
+                obj.LTA.tdt.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), tdt_LTA, 'uniformoutput', 0));%./(RPEwin+1);
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LTA.tdt.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LTA.tdt.RPE(rews) = obj.LTA.tdt.maxs(rews);
@@ -589,6 +611,8 @@ classdef CLASS_sloshing_model_obj < handle
             % prep mean/median signals
             means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), smoothedLOTA, 'uniformoutput', 0));
             medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), smoothedLOTA, 'uniformoutput', 0));
+
+            sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), smoothedLOTA, 'uniformoutput', 0));
             % assign RPE to each trial: (note this means RAILS signal)
             RPE = nan(numel(lick_time_next_trial),1);
             RPE(rews) = maxs(rews);
@@ -610,6 +634,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LOTA.EMG.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), EMG_LOTA, 'uniformoutput', 0));
                 obj.LOTA.EMG.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), EMG_LOTA, 'uniformoutput', 0));
+                obj.LOTA.EMG.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), EMG_LOTA, 'uniformoutput', 0));
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LOTA.EMG.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LOTA.EMG.RPE(rews) = obj.LOTA.EMG.maxs(rews);
@@ -642,6 +667,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LOTA.X.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), X_LOTA, 'uniformoutput', 0));
                 obj.LOTA.X.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), X_LOTA, 'uniformoutput', 0));
+                obj.LOTA.X.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), X_LOTA, 'uniformoutput', 0));
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LOTA.X.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LOTA.X.RPE(rews) = obj.LOTA.X.maxs(rews);
@@ -665,6 +691,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LOTA.tdt.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), tdt_LOTA, 'uniformoutput', 0));
                 obj.LOTA.tdt.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), tdt_LOTA, 'uniformoutput', 0));
+                obj.LOTA.tdt.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), tdt_LOTA, 'uniformoutput', 0));
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LOTA.tdt.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LOTA.tdt.RPE(rews) = obj.LOTA.tdt.maxs(rews);
@@ -732,6 +759,7 @@ classdef CLASS_sloshing_model_obj < handle
             % prep mean/median signals
             obj.LOTA.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), smoothedLOTA, 'uniformoutput', 0));
             obj.LOTA.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), smoothedLOTA, 'uniformoutput', 0));
+            obj.LOTA.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), smoothedLOTA, 'uniformoutput', 0));
             % assign RPE to each trial: (note this means RAILS signal)
             obj.LOTA.RPE = nan(numel(lick_time_next_trial),1);
             obj.LOTA.RPE(rews) = obj.LOTA.maxs(rews);
@@ -745,6 +773,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LOTA.EMG.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), EMG_LOTA, 'uniformoutput', 0));
                 obj.LOTA.EMG.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), EMG_LOTA, 'uniformoutput', 0));
+                obj.LOTA.EMG.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), EMG_LOTA, 'uniformoutput', 0));
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LOTA.EMG.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LOTA.EMG.RPE(rews) = obj.LOTA.EMG.maxs(rews);
@@ -759,6 +788,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LOTA.X.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), X_LOTA, 'uniformoutput', 0));
                 obj.LOTA.X.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), X_LOTA, 'uniformoutput', 0));
+                obj.LOTA.X.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), X_LOTA, 'uniformoutput', 0));
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LOTA.X.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LOTA.X.RPE(rews) = obj.LOTA.X.maxs(rews);
@@ -772,6 +802,7 @@ classdef CLASS_sloshing_model_obj < handle
                 % prep mean/median signals
                 obj.LOTA.tdt.means = cell2mat(cellfun(@(x) mean(x(window_start_pos:window_start_pos+RPEwin)), tdt_LOTA, 'uniformoutput', 0));
                 obj.LOTA.tdt.medians = cell2mat(cellfun(@(x) median(x(window_start_pos:window_start_pos+RPEwin)), tdt_LOTA, 'uniformoutput', 0));
+                obj.LOTA.tdt.sums = cell2mat(cellfun(@(x) sum(x(window_start_pos:window_start_pos+RPEwin)), tdt_LOTA, 'uniformoutput', 0));
                 % assign RPE to each trial: (note this means RAILS signal)
                 obj.LOTA.tdt.RPE = nan(numel(lick_time_next_trial),1);
                 obj.LOTA.tdt.RPE(rews) = obj.LOTA.tdt.maxs(rews);
@@ -1152,7 +1183,7 @@ classdef CLASS_sloshing_model_obj < handle
             trialsNotIncluded = ~ismember(fLick_trial_num, trialsIncluded);
 
         end
-        function [B,DEV,STATS, yfit, rsq, resid,ModelPacket, Signal,y, mdl, excl] = fitModel(obj, Mode, Model, Signal, normalizeX, Early_or_Rew_conditioning, stimOnly, yinput)
+        function [B,DEV,STATS, yfit, rsq, resid,ModelPacket, Signal,y, mdl, excl] = fitModel(obj, Mode, Model, Signal, normalizeX, Early_or_Rew_conditioning, stimOnly, yinput, PooledMode, ntrialsback)
             %   Fits the following models for Mode = LTA or LOTA or outcome:
             %       
             %       Mode:
@@ -1204,7 +1235,11 @@ classdef CLASS_sloshing_model_obj < handle
             %               mean: uses value stored in means
             %               median: uses value stored in medians
             %
+            % 
+            %       PooledMode: only does the simplest model (all trials no conditioning) on pooled trials
             %             
+            if nargin < 10, ntrialsback = 0;end % the usual model
+            if nargin < 9, PooledMode=false;end
             if nargin < 8, yinput = [];end
             % if ~isempty(yinput), warning('rbf! I left off here. we need to test if we can input yinput directly'), end
             if nargin < 7, stimOnly = false;end
@@ -1213,6 +1248,12 @@ classdef CLASS_sloshing_model_obj < handle
                 normalizeX = false;
             end
             
+            if PooledMode
+                if ~isfield(obj.LTA, 'Pooled')
+                    error('need to pool the trials first. Use obj.PoolTrials(...)')
+                end
+            end
+
             % this calls the helper script where all the model strings are parsed
             fitModelHelper_sloshingModel
 
@@ -1305,7 +1346,7 @@ classdef CLASS_sloshing_model_obj < handle
             % 
 
             % fitglm methods: introduced from elsewhere in file on 6/13/23
-            Theta_Names = obj.getThetaNames(Mode, RPEwin_xshift, RPEwin);
+            Theta_Names = obj.getThetaNames(Mode, RPEwin_xshift, RPEwin, [], ntrialsback);
             % Theta_Names = obj.getThetaNames(ModelName, xshift, Window); %  <-og
             Theta_Names_short = cellfun(@(x) x{1}, cellfun(@(x) strsplit(x,' '), Theta_Names, 'uniformoutput', 0), 'uniformoutput', 0);
             t = table(y, ones(numel(Signal(:,1)),1), 'VariableNames', {Model, Theta_Names_short{1}});
@@ -1351,9 +1392,15 @@ classdef CLASS_sloshing_model_obj < handle
             % mdl = [];
             %---------------------------------------------------------------------------------
 
+            % if pooled trial, put back to normal:
+            if PooledMode
+                obj.LTA = tempLTA;
+            end
+
             if contains(Mode, 'LTA')% || strcmpi(Mode, 'LTA-&-EMG') || strcmpi(Mode, 'LTA-&-tdt') || strcmpi(Mode, 'LTA-&-EMG-&-tdt')
                 if numel(obj.LTA.Models) == 1, ii = 1; else, ii=numel(obj.LTA.Models)+1; end
                 ModelDeets.ModelType = 'LTA';
+                obj.LTA.Models(ii).PooledMode = PooledMode;
                 obj.LTA.Models(ii).Model = Model;
                 obj.LTA.Models(ii).Signal = Signal;
                 obj.LTA.Models(ii).Window = [RPEwin_xshift/1000, RPEwin_xshift/1000+RPEwin/1000];
@@ -1364,6 +1411,7 @@ classdef CLASS_sloshing_model_obj < handle
                 obj.LTA.Models(ii).rsq = rsq;
                 obj.LTA.Models(ii).resid = resid;
                 obj.LTA.Models(ii).mdl = mdl;
+
             elseif contains(Mode, 'LOTA') %|| strcmpi(Mode, 'LOTA-&-EMG') || strcmpi(Mode, 'LOTA-&-tdt') || strcmpi(Mode, 'LOTA-&-EMG-&-tdt')
                 if numel(obj.LOTA.Models) == 1, ii = 1; else, ii=numel(obj.LOTA.Models)+1; end
                 ModelDeets.ModelType = 'LOTA';
@@ -1423,12 +1471,17 @@ classdef CLASS_sloshing_model_obj < handle
         function normSig = normSig(obj,Signal)
             normSig = (Signal - min(Signal))/(max(Signal) - min(Signal));
         end
-        function plotModel(obj,x,y,yfit,early, rews,STATS,rsq,Title,Xl, Yl, ax)
+        function plotModel(obj,x,y,yfit,early, rews,STATS,rsq,Title,Xl, Yl, ax, PooledMode)
+            if nargin < 13
+                PooledMode = false;
+            end
             if iscell(y), y=cell2mat(y);end
             plot(ax,x, y, 'k.', 'markersize', 20, 'handlevisibility', 'off');
-            plot(ax,x(rews), y(rews), 'g.', 'markersize', 20, 'displayname', 'prev reward');
-            plot(ax,x(early), y(early), 'r.', 'markersize', 20, 'displayname', 'prev early');
-            if isfield(obj.LTA,'stimIdx')
+            if ~PooledMode
+                plot(ax,x(rews), y(rews), 'g.', 'markersize', 20, 'displayname', 'prev reward');
+                plot(ax,x(early), y(early), 'r.', 'markersize', 20, 'displayname', 'prev early');
+            end
+            if isfield(obj.LTA,'stimIdx') && ~PooledMode
                 plot(ax,x(obj.LTA.stimIdx), y(obj.LTA.stimIdx), '.', 'color', [0.9, 0.8,0], 'markersize', 10, 'displayname', 'stim');
                 plot(ax,x(obj.LTA.nostimIdx), y(obj.LTA.nostimIdx), '.','color', [0.2, 0.2, 0.2], 'markersize', 10, 'displayname', 'nostim');
             end
@@ -1882,7 +1935,7 @@ classdef CLASS_sloshing_model_obj < handle
             if nargin < 3, div=10; end
             if nargin < 4, Model='del';end
             if nargin < 5, Signal = 'Mean'; end
-            if nargin < 6, useMask = false;end % this has to do with limiting our conideration only to those trials that are between 0-7s, so not considering ITI
+            if nargin < 6, useMask = true;end % this has to do with limiting our conideration only to those trials that are between 0-7s, so not considering ITI
             if nargin < 7, Early_or_Rew_conditioning = 'none';end % if this is 'early' or 'reward', we will only 
                 %                                           predict on that category on the current trial. this is mostly for the del model
             if useMask, obj.useMask; end
@@ -2110,14 +2163,168 @@ classdef CLASS_sloshing_model_obj < handle
                 [rsq{ii}, criterion{ii}, ModelNames, Theta_Names{ii}, mdls, fs(ii)] = obj.SelectModel(Mode,xshift(ii),Window,Model,Signal);
             end
         end
-        function [rsq, criterion, ModelNames, Theta_Names, mdls, f] = SelectModel(obj,Mode,xshift,Window,Model,Signal)
+        function PoolTrials(obj, nbins, Signal, xshift,Window,exclude_rxn, exclude_iti)
+            % 
+            %   We need to decide if we want to pool trials or not
+            % 
+            if nargin < 2, nbins = 10;end
+            if nargin < 3, Signal = 'mean';end
+            if nargin < 4, xshift=0;end
+            if nargin < 5, Window=500;end
+            if nargin < 6, exclude_rxn = true;end
+            if nargin < 7, exclude_iti = true;end
+
+            obj.resetLTA(xshift, Window);
+
+            LTA = obj.LTA.means;
+            delta_lick_time = obj.LTA.delta_lick_time;
+
+
+            if exclude_rxn
+                LTA(obj.LTA.rxn) = nan;
+            end
+            if exclude_iti
+                LTA(obj.LTA.iti) = nan;
+            end
+
+            % now pool:
+            X = LTA;
+            Y = delta_lick_time;
+            killix = isnan(X);
+            X(killix) = [];
+            Y(killix) = [];
+            [Xsorted, ix] = sort(X);
+            Ysorted = Y(ix);
+            Edges = round(linspace(1, numel(Ysorted), nbins));
+            XX = nan(numel(Edges)-1, 1);
+            YY = nan(numel(Edges)-1, 1);
+
+            if isfield(obj.LTA, 'tdt')
+                if strcmpi(Signal, 'means') || strcmpi(Signal, 'mean')
+                    tdt = obj.LTA.tdt.means;
+                elseif strcmpi(Signal, 'maxs') || strcmpi(Signal, 'peaks')
+                    tdt = obj.LTA.tdt.maxs;
+                elseif strcmpi(Signal, 'medians') || strcmpi(Signal, 'median')
+                    tdt = obj.LTA.tdt.median;
+                else
+                    error('undefined Signal for this analysis, may need to add a case like for rails...')
+                end
+                tdtsorted = tdt(ix);
+                tdt_pooled = nan(numel(Edges)-1, 1);
+            end
+            if isfield(obj.LTA, 'X')
+                if strcmpi(Signal, 'means') || strcmpi(Signal, 'mean')
+                    Acc = obj.LTA.X.means;
+                elseif strcmpi(Signal, 'maxs') || strcmpi(Signal, 'peaks')
+                    Acc = obj.LTA.X.maxs;
+                elseif strcmpi(Signal, 'medians') || strcmpi(Signal, 'median')
+                    Acc = obj.LTA.X.median;
+                else
+                    error('undefined Signal for this analysis, may need to add a case like for rails...')
+                end
+                Acc_sorted = Acc(ix);
+                Acc_pooled = nan(numel(Edges)-1, 1);
+            end
+            if isfield(obj.LTA, 'EMG')
+                if strcmpi(Signal, 'means') || strcmpi(Signal, 'mean')
+                    EMG = obj.LTA.EMG.means;
+                elseif strcmpi(Signal, 'maxs') || strcmpi(Signal, 'peaks')
+                    EMG = obj.LTA.EMG.maxs;
+                elseif strcmpi(Signal, 'medians') || strcmpi(Signal, 'median')
+                    EMG = obj.LTA.EMG.median;
+                else
+                    error('undefined Signal for this analysis, may need to add a case like for rails...')
+                end
+                EMGsorted = EMG(ix);
+                EMG_pooled = nan(numel(Edges)-1, 1);
+            end
+            
+            for ii = 1:numel(Edges)-1
+                XX(ii) = nanmean(Xsorted(Edges(ii):Edges(ii+1)-1));
+                YY(ii) = nanmean(Ysorted(Edges(ii):Edges(ii+1)-1));
+
+                if isfield(obj.LTA, 'tdt')
+                    tdt_pooled(ii) = nanmean(tdtsorted(Edges(ii):Edges(ii+1)-1));
+                end
+                if isfield(obj.LTA, 'X')
+                    Acc_pooled(ii) = nanmean(Acc_sorted(Edges(ii):Edges(ii+1)-1));
+                end
+                if isfield(obj.LTA, 'EMG')
+                    EMG_pooled(ii) = nanmean(EMGsorted(Edges(ii):Edges(ii+1)-1));
+                end
+            end
+            [f, ax] = makeStandardFigure(2, [1,2]);
+            plot(ax(1), XX, YY, 'ko', 'markersize', 10, 'markerfacecolor', 'b')
+            legend(ax(2), 'show')
+            plot(ax(2), normalize_0_1(XX), YY, 'ko', 'markersize', 10, 'markerfacecolor', 'b', 'displayname', 'DA')
+            if isfield(obj.LTA, 'tdt')
+                plot(ax(2), normalize_0_1(tdt_pooled), YY, 'ko', 'markersize', 10, 'markerfacecolor', 'r', 'displayname', 'tdt')
+            end
+            if isfield(obj.LTA, 'X')
+                plot(ax(2), normalize_0_1(Acc_pooled), YY, 'ko', 'markersize', 10, 'markerfacecolor', 'g', 'displayname', 'X')
+            end
+            if isfield(obj.LTA, 'EMG')
+                plot(ax(2), normalize_0_1(EMG_pooled), YY, 'ko', 'markersize', 10, 'markerfacecolor', 'k', 'displayname', 'EMG')
+            end
+
+            trials_per_bin = mean(Edges(2:end)-Edges(1:end-1));
+
+
+            % update our records
+            obj.LTA.Pooled.nbins = nbins;
+            obj.LTA.Pooled.Signal = Signal;
+            obj.LTA.Pooled.exclude_rxn = exclude_rxn;
+            obj.LTA.Pooled.exclude_iti = exclude_iti;
+            obj.LTA.Pooled.LTA = XX;
+            obj.LTA.Pooled.delta_lick_time = YY;
+            if isfield(obj.LTA, 'tdt')
+                obj.LTA.Pooled.tdt = tdt_pooled;
+            end
+            if isfield(obj.LTA, 'X')
+                obj.LTA.Pooled.X = Acc_pooled;
+            end
+            if isfield(obj.LTA, 'EMG')
+                obj.LTA.Pooled.EMG = EMG_pooled;
+            end
+
+        end
+        function [rsq, criterion, ModelNames, Theta_Names, mdls, f, R2_cv, MSE_cv, bestModel] = SelectModel(obj,Mode,xshift,Window,Model,Signal, PooledMode, nbins)
             % 
             %   Here, Mode is just LTA or LOTA. We will try all permutations of the model to pick the one with lowest AIC
             % 
             %   Model: del, abs, logabs
             %   Signal: rails, mean, medians
             %            
+            if nargin < 8, nbins = 10;end
+            if nargin < 7, PooledMode = false;end
+
             normalizeX = true;
+            useMask = true;
+            Early_or_Rew_conditioning = 'none';
+            stimOnly = false;
+
+            if PooledMode
+                % we need to change our predictors to be pooled
+                obj.PoolTrials(nbins, Signal, xshift,Window,~obj.iv.includeRxnsAsEarly, useMask);
+            end
+
+            
+
+            if ~obj.iv.includeRxnsAsEarly
+                obj.LTA.delta_lick_time(obj.LTA.rxn) = nan;
+                omitRxn = true;
+            else
+                omitRxn = false;
+            end
+
+            if useMask
+                obj.useMask();
+            end
+
+            ud = ['sloshing_obj.SelectModel(Mode="' Mode '",xshift=' num2str(xshift) ',Window=' num2str(Window) ',Model="' Model '",Signal="' Signal '", PooledMode=' num2str(PooledMode) ', nbins=' num2str(nbins) ')\n\n' ...
+                'rxnsOmitted = ' num2str(omitRxn) ' \n' ...
+                'itiOmitted = ' num2str(useMask) ' \n\n' ...
+                 obj.getUserDataStandards];
             % check for signals...
             if strcmpi(Mode, 'LTA') 
                 obj.resetLTA(xshift, Window);
@@ -2187,7 +2394,7 @@ classdef CLASS_sloshing_model_obj < handle
             ModelNames = cellfun(@(x) strcat(Mode, x), ModelNames, 'uniformoutput',0)';
 
             for ii = 1:numel(ModelNames)
-                [~,~,STATS{ii}, yfit{ii}, rsq(ii),~,Models{ii},X{ii}, y{ii}] = obj.fitModel(ModelNames{ii}, Model, Signal, normalizeX);
+                [~,~,STATS{ii}, yfit{ii}, rsq(ii),~,Models{ii},X{ii}, y{ii}] = obj.fitModel(ModelNames{ii}, Model, Signal, normalizeX, Early_or_Rew_conditioning, stimOnly, [], PooledMode);
                 Theta_Names{ii} = obj.getThetaNames(ModelNames{ii}, xshift, Window);
                 WindowText = [num2str(xshift/1000) ':' num2str((xshift+Window)/1000) 's'];
             
@@ -2208,29 +2415,30 @@ classdef CLASS_sloshing_model_obj < handle
                 modelspec = cell2mat([Signal,'~',Theta_Names_short{1}, cellfun(@(x) ['+',x],Theta_Names_short(2:end), 'uniformoutput',0)]);
 %                 end
                 mdl = fitglm(t,modelspec,'Distribution','normal','intercept',false);
-                XXnew.B = mdl.Coefficients.Estimate;
-                XXnew.STATS.se = mdl.Coefficients.SE;
-                XXnew.STATS.dfe = mdl.DFE;
+                XXnew(ii).B = mdl.Coefficients.Estimate;
+                XXnew(ii).STATS.se = mdl.Coefficients.SE;
+                XXnew(ii).STATS.dfe = mdl.DFE;
 
-                if ii == numel(ModelNames)
-%                     [f,ax] = makeStandardFigure(4, [2,2]);
-                    [f,ax] = makeStandardFigure(4, [2,2]);
-%                     obj.plotModel(X{1},y{ii},yfit{ii},early,rews,STATS{ii},rsq(ii),Title,Xl,Yl, ax(1));
-%                     obj.plotCoeff(Models{ii},Theta_Names,[],[Mode ' ' WindowText], ax(3));
-                    % obj,x,y,yfit,early, rews,STATS,rsq,Title,Xl, Yl, ax)
-                    obj.plotModel(mdl.Variables{:,end},mdl.Variables.mean,mdl.Fitted.Response,early,rews,STATS{ii},mdl.Rsquared.Ordinary,[Title ' - NEW METHOD'],Xl,Yl, ax(2));
-                    obj.plotCoeff(XXnew,Theta_Names{ii},[],[Mode ' ' WindowText], ax(4));
-                    set(f, 'name', [cell2mat(obj.iv.sessionCode), ' ' cell2mat(ModelNames{ii}) ' ' WindowText])
-                end
+                % let's try leave-1-out crossvalidation for each model
+                [R2_cv(ii), MSE_cv(ii), R2_ci(:,ii), MSE_ci(:,ii)] = leave_one_out_GLM_crossvalidation(mdl, 10000);
 
                 AIC(ii) = mdl.ModelCriterion.AIC;
                 AICc(ii) = mdl.ModelCriterion.AICc;
                 CAIC(ii) = mdl.ModelCriterion.CAIC;
                 BIC(ii) = mdl.ModelCriterion.BIC;
-                rsq_corrected(ii) = mdl.Rsquared.Ordinary;
+                rsq_fit(ii) = mdl.Rsquared.Ordinary;
                 mdls{ii} = mdl;
                 
             end
+            % select the best model by xval
+            bestModel = find(MSE_cv == nanmin(MSE_cv));
+            mdl = mdls{bestModel};
+            [f,ax] = makeStandardFigure(6, [3,2]);
+            set(f, 'Position', [0.5489    0.0092    0.4325    0.8697], 'UserData', ud)
+            obj.plotModel(mdl.Variables{:,end},mdl.Variables.mean,mdl.Fitted.Response,early,rews,STATS{ii},mdl.Rsquared.Ordinary,sprintf([Title '\nBEST=mdl' num2str(bestModel) ' xvR2=' num2str(R2_cv(bestModel))]),Xl,Yl, ax(2), PooledMode);
+            obj.plotCoeff(XXnew(bestModel),Theta_Names{bestModel},[],[Mode ' ' WindowText], ax(4));
+            set(f, 'name', [cell2mat(obj.iv.sessionCode), ' ' cell2mat(ModelNames{ii}) ' ' WindowText])
+            
 %             [f,ax] = makeStandardFigure(2, [1,2]);
             plot(ax(1), 1:numel(AIC), AIC, 'k-', 'linewidth', 2,'displayname','AIC')
             plot(ax(1), 1:numel(AICc), AICc, 'b-', 'linewidth', 2,'displayname','AICc')
@@ -2245,19 +2453,33 @@ classdef CLASS_sloshing_model_obj < handle
             plot(ax(1),find(BIC==min(BIC)), min(BIC), 'g*','linewidth', 2,'displayname','best')
             legend(ax(1), 'show')
 
-            plot(ax(3), 1:numel(AIC), rsq_corrected, 'k-', 'linewidth', 2,'displayname','Rsq fitglm')
-            ylabel(ax(3),'Rsq')
+            plot(ax(3), 1:numel(AIC), rsq_fit, 'k-', 'linewidth', 2,'displayname','Rsq fit')
+            ylabel(ax(3),'Nested fit Rsq')
             xticks(ax(3),1:numel(AIC))
             % cellfun(@(x) disp(x),ModelNames, 'uniformoutput',0)
+
+            plot(ax(5), bestModel, R2_cv(bestModel), 'ko', 'markerfacecolor', 'g', 'DisplayName', 'best xval')
+            plot(ax(5), 1:numel(AIC), R2_cv, 'k-', 'linewidth', 2,'displayname','Rsq LOO xval')
+            ylabel(ax(5),'LOO xval Rsq')
+            xticks(ax(5),1:numel(AIC))
+
+            plot(ax(6), bestModel, MSE_cv(bestModel), 'ko','markerfacecolor', 'g', 'DisplayName', 'best xval')
+            plot(ax(6), 1:numel(AIC), MSE_cv, 'k-', 'linewidth', 2,'displayname','MSE LOO xval')
+            ylabel(ax(6),'LOO xval MSE')
+            xticks(ax(6),1:numel(AIC))
             
             criterion.AIC = AIC;
             criterion.AICc = AICc;
             criterion.CAIC = CAIC;
             criterion.BIC = BIC;
-            rsq = rsq_corrected;
+            rsq = rsq_fit;
+
+            disp('models:')
+            obj.unwrap_Cellstr(ModelNames)
         end
-        function Theta_Names = getThetaNames(obj, Mode, xshift, win, noBeta)
-            if nargin < 5, noBeta = false; end
+        function Theta_Names = getThetaNames(obj, Mode, xshift, win, noBeta, ntrialsback)
+            if nargin < 6, ntrialsback = 0;end
+            if nargin < 5 || isempty(noBeta), noBeta = false; end
             WindowText = [num2str(xshift/1000) ':' num2str((xshift+win)/1000) 's'];
             thetanames_sloshingModel % call the helper script
             if noBeta, Theta_Names = Theta_Names(2:end); end
@@ -2593,7 +2815,7 @@ classdef CLASS_sloshing_model_obj < handle
             shuffled_lick_time_next_trial = nan(size(lick_time));
             shuffled_lick_time_next_trial(elligible_trials) = shuffled_elligible_lick_time_next_trial;
         end
-        function plot_DA_vs_delta_t(obj)
+        function STATS = plot_DA_vs_delta_t(obj)
             DA = obj.LTA.means;
             del = obj.LTA.delta_lick_time;
             shuffled_del = obj.LTA.shuffled_delta_lick_time;
@@ -2620,6 +2842,31 @@ classdef CLASS_sloshing_model_obj < handle
             prettyHxg(ax(4), shuffled_del(early), 'early trials', 'r', -20:20);
             prettyHxg(ax(4), shuffled_del(rews), 'rewarded trials', 'g', -20:20);
             xlabel(ax(4), 'shuffled delta lick time')
+
+
+
+            iti = obj.LTA.iti;
+            [f2,ax2] = makeStandardFigure(1,[1,1]);
+            plot(ax2(1), DA(iti), del(iti), 'b.', 'markersize', 30)
+
+            ylabel(ax2(1), 'delta lick time')
+            xlabel(ax2(1), 'iti DA')
+
+            x = DA(iti);
+            y = del(iti);
+            ok = ~isnan(x+y);
+            x = x(ok);
+            y = y(ok);
+            
+            [B,DEV,STATS] = glmfit(x, y, 'normal');
+            yfit = [ones(size(x,1),1),x]*STATS.beta;
+            [rsq,resid] = rSquared(y,yfit);
+            plot(ax2(1), x, yfit, '--')
+            title(ax2(1), ['iti, rsq: ' num2str(rsq)])
+
+            % let's also plot vs regression to the median
+
+            
         end
         function [p,f, coeffs_DA,true_DA_coeff, allcoeffs, ogcoeffindex,y, mdl, X, yfit, rsq, STATS, ModelPacket] = del_permutation_test(obj, n, Mode, Model, Signal, normalizeX, Early_or_Rew_conditioning, useMask)
 
@@ -2663,6 +2910,499 @@ classdef CLASS_sloshing_model_obj < handle
                 Str;
                 ])
         end
+        function f = correct_deltaT_for_r2m(sloshing_obj, obj)
+            % 
+            %   Uses a 50-trial movmedian, needs sObj
+            %       #Nature-rebuttal
+            % 
+            r2m_fit
+            ud = get(f, 'userdata')
+            set(f, 'userdata', ['f = correct_deltaT_for_r2m(sloshing_obj, obj) \n\n' ud])
+        end
 
+        function cross_validate_sloshing_model(obj, mdl)
+            % 
+            %   Default will be leave-1-trial-out cv
+            % 
+        end
+        function LTAs_back = get_previous_trial_LTA_stuff(obj, LTAfield, ntrialsback)
+            warning('rbf -- make sure is aligned right')
+            % 
+            %   Use this to get n-trials back LTA signal for model fitting
+            % 
+            %   LTAfield = e.g., sloshing_obj.LTA.means;
+            % 
+            if nargin <3, ntrialsback = 1;end %% this gets the trial before the current transient. so our del will still be trial n to n+1, but the LTA field here is n-1
+            teb = cell2mat(obj.LTA.trials_in_each_bin);
+            maxtrials = nanmax(teb);
+
+            % start by putting in correct order
+            all_LTAs = nan(maxtrials,1);
+            all_LTAs(teb) = LTAfield;
+            all_LTAs_back = [nan(ntrialsback,1); all_LTAs];
+            all_LTAs_back = all_LTAs_back(1:maxtrials);
+            LTAs_back = all_LTAs_back(teb);
+        end
+        function [Name,mdls,f] = runNTrialsBackModel(obj,Mode,normalizeX,useMask, stimOnly, Early_or_Rew_conditioning, ntrialsback, PooledMode)
+            warning('I tested this to look for n-1 effects ONLY on b0+DA+DA_minus_1 for B5_SNc_13. I didnt find much so I didn''t fully debug these. Address the warnings by checking stuff if you want to use this in future - 5/23/26, R-2 revision comments for n-1 effects')
+            % 
+            %   ntrialsback is a vector of the number of trials back we wanna fit with. default should include 
+            %                   trial n (the standard model), n-1 and n-2 predicting on change from n to n+1 = [0,1,2]
+            %             
+            %  Mode is LTA or LOTA or CTA. Uses stored params. 
+            %       useMask will limit the window of consideration to signals where the lick time on the next trial was within the timing range (0-7s)
+            % 
+            if nargin < 8
+                PooledMode=false;
+            end
+            if PooledMode, error('need to be sure this is implemented. I havent tried yet and am not sure how ntrialsback will work with pooled'),end
+            if nargin < 7, ntrialsback = [0,1,2];end
+            if nargin < 6, Early_or_Rew_conditioning = 'none';end
+            if nargin < 5, stimOnly = false; end
+            if nargin < 4, useMask = false; end
+            if nargin <3, normalizeX = true; end
+            if useMask, obj.useMask(); end
+            if contains(Mode, 'LTA')% || strcmpi(Mode, 'LTA-EMG') || strcmpi(Mode, 'LTA-&-EMG')  || strcmpi(Mode, 'LTA-tdt') ||  strcmpi(Mode, 'LTA-&-tdt')  || strcmpi(Mode, 'LTA-&-EMG-&-tdt')
+                early = obj.LTA.early;
+                rews = obj.LTA.rews;
+                delta_lick_time = obj.LTA.delta_lick_time;
+                lick_time_next_trial = obj.LTA.lick_time_next_trial;
+                log_lick_time_next_trial = obj.LTA.log_lick_time_next_trial;
+                RPEwin_xshift = obj.LTA.RPEwin_xshift;
+                RPEwin = obj.LTA.RPEwin;
+                if stimOnly
+                    delta_lick_time(obj.LTA.nostimIdx) = nan;
+                    lick_time_next_trial(obj.LTA.nostimIdx) = nan;
+                    log_lick_time_next_trial(obj.LTA.nostimIdx) = nan;
+                end
+                
+                if strcmpi(Mode, 'LTA-EMG')
+                    if normalizeX
+                        medians = obj.normSig(obj.LTA.EMG.medians);
+                        means = obj.normSig(obj.LTA.EMG.means);
+                        RPE = obj.normSig(obj.LTA.EMG.RPE);
+                    else
+                        medians = obj.LTA.EMG.medians;
+                        means = obj.LTA.EMG.means;
+                        RPE = obj.LTA.EMG.RPE;
+                    end
+                    xxl = ['EMG, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's post-lick'];
+                elseif strcmpi(Mode, 'LTA-tdt')
+                    if normalizeX
+                        medians = obj.normSig(obj.LTA.tdt.medians);
+                        means = obj.normSig(obj.LTA.tdt.means);
+                        RPE = obj.normSig(obj.LTA.tdt.RPE);
+                    else
+                        medians = obj.LTA.tdt.medians;
+                        means = obj.LTA.tdt.means;
+                        RPE = obj.LTA.tdt.RPE;
+                    end
+                    xxl = ['tdt, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's post-lick'];
+                elseif strcmpi(Mode, 'LTA-X')
+                    if normalizeX
+                        medians = obj.normSig(obj.LTA.X.medians);
+                        means = obj.normSig(obj.LTA.X.means);
+                        RPE = obj.normSig(obj.LTA.X.RPE);
+                    else
+                        medians = obj.LTA.X.medians;
+                        means = obj.LTA.X.means;
+                        RPE = obj.LTA.X.RPE;
+                    end
+                    xxl = ['X, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's post-lick'];
+                else % if ~strcmpi(Mode, 'LTA-EMG') &&%strcmpi(Mode, 'LTA') || strcmpi(Mode, 'LTA-&-EMG') || strcmpi(Mode, 'LTA-&-tdt') || strcmpi(Mode, 'LTA-&-EMG-&-tdt')
+                    if normalizeX
+                        medians = obj.normSig(obj.LTA.medians);
+                        means = obj.normSig(obj.LTA.means);
+                        RPE = obj.normSig(obj.LTA.RPE);
+                    else
+                        medians = obj.LTA.medians;
+                        means = obj.LTA.means;
+                        RPE = obj.LTA.RPE;
+                    end
+                    xxl = ['DA, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's post-lick'];
+                end
+            elseif contains(Mode, 'LOTA') %|| strcmpi(Mode, 'LOTA-EMG') || strcmpi(Mode, 'LOTA-&-EMG')  || strcmpi(Mode, 'LOTA-tdt') ||  strcmpi(Mode, 'LOTA-&-tdt')  || strcmpi(Mode, 'LOTA-&-EMG-&-tdt')
+                early = obj.LOTA.early;
+                rews = obj.LOTA.rews;
+                delta_lick_time = obj.LOTA.delta_lick_time;
+                lick_time_next_trial = obj.LOTA.lick_time_next_trial;
+                log_lick_time_next_trial = obj.LOTA.log_lick_time_next_trial;
+                RPEwin_xshift = obj.LOTA.RPEwin_xshift;
+                RPEwin = obj.LOTA.RPEwin;
+                if strcmpi(Mode, 'LOTA-EMG')
+                    if normalizeX
+                        medians = obj.normSig(obj.LOTA.EMG.medians);
+                        means = obj.normSig(obj.LOTA.EMG.means);
+                        RPE = obj.normSig(obj.LOTA.EMG.RPE);
+                    else
+                        medians = obj.LOTA.EMG.medians;
+                        means = obj.LOTA.EMG.means;
+                        RPE = obj.LOTA.EMG.RPE;
+                    end
+                    xxl = ['pre-LOI EMG, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's wrt LO'];
+                    
+                elseif strcmpi(Mode, 'LOTA-tdt')
+                    if normalizeX
+                        medians = obj.normSig(obj.LOTA.tdt.medians);
+                        means = obj.normSig(obj.LOTA.tdt.means);
+                        RPE = obj.normSig(obj.LOTA.tdt.RPE);
+                    else
+                        medians = obj.LOTA.tdt.medians;
+                        means = obj.LOTA.tdt.means;
+                        RPE = obj.LOTA.tdt.RPE;
+                    end
+                    xxl = ['pre-LOI tdt, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's wrt LO'];
+                    
+                elseif strcmpi(Mode, 'LOTA-X')
+                    if normalizeX
+                        medians = obj.normSig(obj.LOTA.X.medians);
+                        means = obj.normSig(obj.LOTA.X.means);
+                        RPE = obj.normSig(obj.LOTA.X.RPE);
+                    else
+                        medians = obj.LOTA.X.medians;
+                        means = obj.LOTA.X.means;
+                        RPE = obj.LOTA.X.RPE;
+                    end
+                    xxl = ['pre-LOI X, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's wrt LO'];
+                    
+                else %if strcmpi(Mode, 'LOTA') || strcmpi(Mode, 'LOTA-&-EMG') || strcmpi(Mode, 'LOTA-&-tdt')  || strcmpi(Mode, 'LOTA-&-EMG-&-tdt')
+                    if normalizeX
+                        medians = obj.normSig(obj.LOTA.medians);
+                        means = obj.normSig(obj.LOTA.means);
+                        RPE = obj.normSig(obj.LOTA.RPE);
+                    else
+                        medians = obj.LOTA.medians;
+                        means = obj.LOTA.means;
+                        RPE = obj.LOTA.RPE;
+                    end
+                    xxl = ['pre-LOI DA, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's wrt LO'];
+                    
+                end
+
+            elseif contains(Mode, 'CTA')
+                if ntrialsback > 0
+                    error('I didnt update this for ntrials back yet')
+                else
+                    CTA_fithelper_runmodelsandplot
+                end
+
+
+            elseif contains(Mode, 'outcome')
+                if normalizeX
+                    medians = obj.normSig(obj.LTA.medians);
+                    means = obj.normSig(obj.LTA.means);
+                    RPE = obj.normSig(obj.LTA.RPE);
+                else
+                    medians = obj.LTA.medians;
+                    means = obj.LTA.means;
+                    RPE = obj.LTA.RPE;
+                end
+                xxl = ['outcome'];
+                early = obj.LTA.early;
+                rews = obj.LTA.rews;
+                delta_lick_time = obj.LTA.delta_lick_time;
+                lick_time_next_trial = obj.LTA.lick_time_next_trial;
+                log_lick_time_next_trial = obj.LTA.log_lick_time_next_trial;
+                RPEwin_xshift = obj.LTA.RPEwin_xshift;
+                RPEwin = obj.LTA.RPEwin;            
+            else, error('Mode is LTA or LOTA or CTA')
+            end
+            if stimOnly
+                medians(obj.LTA.nostimIdx) = nan;
+                means(obj.LTA.nostimIdx) = nan;
+                RPE(obj.LTA.nostimIdx) = nan;
+            end
+
+            Theta_Names = obj.getThetaNames(Mode, RPEwin_xshift, RPEwin, [], ntrialsback);
+            mdls = {};
+            
+            [f,ax] = makeStandardFigure(2,[2,1]);
+            % just doing for del model here
+            
+            
+            [~,~,STATS, yfit, rsq, ~,ModelPacket,~,y, ~,excl] = obj.fitModel(Mode, 'del', 'mean',normalizeX,Early_or_Rew_conditioning, stimOnly, [], PooledMode, ntrialsback);
+            
+            mdls{1} = ModelPacket.mdl;
+            x=means;
+            x(excl) = nan;
+            if normalizeX, x = obj.normSig(x);end
+            % y=delta_lick_time;
+            Title='Delta-n vs Mean DA';
+            Xl = ['Mean DA ', xxl];
+            Yl='lt (n+1) - n';
+            obj.plotModel(x,y,yfit,early,rews,STATS,rsq,Title,Xl,Yl, ax(1));
+            obj.plotCoeff(ModelPacket,Theta_Names,[],'beta', ax(2));
+            
+           
+            
+            Name = [obj.iv.sessionCode, ' ' Mode, ' fits, Window: ' num2str(RPEwin_xshift/1000) ':' num2str((RPEwin_xshift+RPEwin)/1000) 's ' Early_or_Rew_conditioning];
+            if iscell(Name), Name=cell2mat(Name);end
+            set(f, 'name', Name); 
+            set(f, 'userdata', ['[Name,mdls] = runNTrialsBackModel(sloshing_obj,Mode=' Mode ',normalizeX=' num2str(normalizeX) ',useMask=' num2str(useMask) ', stimOnly=' num2str(stimOnly) ', Early_or_Rew_conditioning' Early_or_Rew_conditioning ', ntrialsback=' mat2str(ntrialsback) ', PooledMode=' num2str(PooledMode) ')' '\n\n' getUserDataStandards(obj)])
+        end
+        function copyAxisChildren(obj,ax_src, ax_recepient)
+            % Get all children from source axis
+            sourceChildren = allchild(ax_src);
+            
+            % Copy each child to target axis
+            for ii = 1:length(sourceChildren)
+                copyobj(sourceChildren(ii), ax_recepient);
+            end
+            
+            ax_recepient.XLim = ax_src.XLim;
+            ax_recepient.YLim = ax_src.YLim;
+            ax_recepient.XLabel.String = ax_src.XLabel.String;
+            ax_recepient.YLabel.String = ax_src.YLabel.String;
+            ax_recepient.Title.String = ax_src.Title.String;
+        end
+        function [results,dataPrinted] = LOOCV_helper(obj,data, responseVar, formulas, mdls, modelNames, makeModel1CTA)
+            nObs = height(data);
+            nModels = numel(mdls);
+            
+            % Pre-allocate arrays for predictions and residuals
+            predictions = nan(nObs, nModels);
+            residuals = nan(nObs, nModels);
+            
+            % Perform LOOCV
+            fprintf('Running leave-one-out cross-validation...\n');
+            
+            for ii = 1:nObs
+                if mod(ii, 100) == 0
+                    fprintf('  Processing observation %d of %d\n', ii, nObs);
+                end
+                % Create training set (leave out observation i)
+                trainIdx = true(nObs, 1);
+                trainIdx(ii) = false;
+                trainData = data(trainIdx, :);
+                testData = data(ii, :);
+                
+                % Fit and predict for each model
+                for m = 1:nModels
+                    try
+                        % Fit model on training data using same distribution and link
+                        if makeModel1CTA && m==1
+                            F = 'del ~ b0 + CTA';
+                        else
+                            F = formulas{m};
+                        end
+                        mdl = fitglm(trainData, F, 'Intercept', false);
+                        % Predict on held-out observation
+                        predictions(ii, m) = predict(mdl, testData);
+                    catch ME
+                        warning('Model %d failed on iteration %d: %s', m, ii, ME.message);
+                        predictions(ii, m) = NaN;
+                    end
+                end
+            end
+            
+            % Calculate residuals
+            trueValues = data.(responseVar);
+            for m = 1:nModels
+                residuals(:, m) = trueValues - predictions(:, m);
+            end
+            
+            % Calculate performance metrics
+            results = struct();
+            
+            for m = 1:nModels
+                % Mean Squared Error
+                results.(modelNames{m}).MSE = mean(residuals(:, m).^2, 'omitnan');
+                % Root Mean Squared Error
+                results.(modelNames{m}).RMSE = sqrt(results.(modelNames{m}).MSE);
+                % Mean Absolute Error
+                results.(modelNames{m}).MAE = mean(abs(residuals(:, m)), 'omitnan');
+                
+                % R-squared (predictive R²)
+                validIdx = ~isnan(predictions(:, m)) & ~isnan(trueValues);
+                if sum(validIdx) > 0
+                    SS_res = sum(residuals(validIdx, m).^2);
+                    SS_tot = sum((trueValues(validIdx) - mean(trueValues(validIdx))).^2);
+                    results.(modelNames{m}).R2 = 1 - (SS_res / SS_tot);
+                    
+                    % Correlation coefficient
+                    results.(modelNames{m}).corr = corr(predictions(validIdx, m), trueValues(validIdx));
+                    
+                    % Pearson correlation p-value
+                    [~, results.(modelNames{m}).corr_pval] = corr(predictions(validIdx, m), trueValues(validIdx));
+                else
+                    results.(modelNames{m}).R2 = NaN;
+                    results.(modelNames{m}).corr = NaN;
+                    results.(modelNames{m}).corr_pval = NaN;
+                end
+                
+                % Store predictions and residuals
+                results.(modelNames{m}).predictions = predictions(:, m);
+                results.(modelNames{m}).residuals = residuals(:, m);
+                results.(modelNames{m}).formula = formulas{m};
+                results.(modelNames{m}).nPredictors = length(mdls{m}.CoefficientNames) - 1; % -1 for intercept
+            end
+            
+            % Store metadata
+            results.responseVar = responseVar;
+            results.nObs = nObs;
+            
+            % Display results
+            fprintf('\n=== LOOCV Results ===\n');
+            fprintf('%-10s %8s %10s %10s %10s %10s\n', 'Model', 'nPred', 'MSE', 'RMSE', 'MAE', 'R²');
+            fprintf('%s\n', repmat('-', 1, 65));
+            for m = 1:nModels
+                fprintf('%-10s %8d %10.4f %10.4f %10.4f %10.4f\n', ...
+                    modelNames{m}, ...
+                    results.(modelNames{m}).nPredictors, ...
+                    results.(modelNames{m}).MSE, ...
+                    results.(modelNames{m}).RMSE, ...
+                    results.(modelNames{m}).MAE, ...
+                    results.(modelNames{m}).R2);
+            end
+            fprintf('\nFormulas:\n');
+            for m = 1:nModels
+                fprintf('  %s: %s\n', modelNames{m}, formulas{m});
+            end
+            
+            % Plot comparison
+            figure('Position', [100 100 1200 800]);
+            
+            % Plot 1: Predicted vs Actual for each model
+            for m = 1:nModels
+                subplot(2, 3, m);
+                validIdx = ~isnan(predictions(:, m));
+                scatter(trueValues(validIdx), predictions(validIdx, m), 20, 'filled', 'MarkerFaceAlpha', 0.3);
+                hold on;
+                % Unity line
+                lims = [min([trueValues(validIdx); predictions(validIdx, m)]), ...
+                        max([trueValues(validIdx); predictions(validIdx, m)])];
+                plot(lims, lims, 'k--', 'LineWidth', 1.5);
+                xlabel('Actual');
+                ylabel('Predicted');
+                title(sprintf('%s: %s (R² = %.3f)', modelNames{m}, ...
+                    strrep(formulas{m}, responseVar, 'y'), results.(modelNames{m}).R2));
+                axis square;
+                grid on;
+            end
+            
+            % Plot 2: Residual distributions
+            for m = 1:nModels
+                subplot(2, 3, m + 3);
+                validIdx = ~isnan(residuals(:, m));
+                histogram(residuals(validIdx, m), 30, 'Normalization', 'probability');
+                xlabel('Residual');
+                ylabel('Probability');
+                title(sprintf('%s Residuals (RMSE=%.3f)', modelNames{m}, results.(modelNames{m}).RMSE));
+                grid on;
+                hold on;
+                % Add vertical line at zero
+                yl = ylim;
+                plot([0 0], yl, 'r--', 'LineWidth', 1.5);
+            end
+            
+            sgtitle(sprintf('LOOCV Comparison: %s (N=%d)', responseVar, nObs));
+            
+            % Optional: Statistical comparison of models -- interpretation: if p >0.05 the models are not statistically different
+            fprintf('\n=== Model Comparisons (paired t-tests on squared residuals) ===\n');
+            [~, p_1vs2] = ttest(residuals(:,1).^2, residuals(:,2).^2);
+            [~, p_1vs3] = ttest(residuals(:,1).^2, residuals(:,3).^2);
+            [~, p_2vs3] = ttest(residuals(:,2).^2, residuals(:,3).^2);
+            fprintf('Model1 vs Model2: p = %.4f\n', p_1vs2);
+            fprintf('Model1 vs Model3: p = %.4f\n', p_1vs3);
+            fprintf('Model2 vs Model3: p = %.4f\n', p_2vs3);
+
+
+            dataPrinted = ['=== LOOCV Results ===\n'...
+                sprintf('%-10s %8s %10s %10s %10s %10s\n', 'Model', 'nPred', 'MSE', 'RMSE', 'MAE', 'R²')...
+                sprintf('%s\n', repmat('-', 1, 65))];
+
+            for m = 1:nModels
+                dataPrinted = [dataPrinted, sprintf('%-10s %8d %10.4f %10.4f %10.4f %10.4f\n', ...
+                    modelNames{m}, ...
+                    results.(modelNames{m}).nPredictors, ...
+                    results.(modelNames{m}).MSE, ...
+                    results.(modelNames{m}).RMSE, ...
+                    results.(modelNames{m}).MAE, ...
+                    results.(modelNames{m}).R2)];
+            end
+            dataPrinted = [dataPrinted, '\nFormulas:\n'];
+            for m = 1:nModels
+                dataPrinted = [dataPrinted, sprintf('  %s: %s\n', modelNames{m}, formulas{m})];
+            end
+            
+            
+            dataPrinted = [dataPrinted,...
+                '\n\nLOOCV Comparison: ' responseVar ' (N=' num2str(nObs) ')\n\n'...
+                '=== Model Comparisons (paired t-tests on squared residuals) ===\n'...
+                '\nModel1 vs Model2: p = ' num2str(p_1vs2) ...
+                '\nModel1 vs Model3: p = ' num2str(p_1vs3) ...
+                '\nModel2 vs Model3: p = ' num2str(p_2vs3)];
+        end
+        function cross_validate_LTA_vs_CTA_models(obj, Early_or_Rew_conditioning)
+            
+            % 
+            %   This function fits LTA, CTA and LTA-CTA as nested models. Then we see which survives leave-1-out-xval
+            % 
+            %   There is some stuff hard-coded--look at code to see (#Nature-rebuttal)
+            % 
+            obj.resetLTA(0,500);
+            obj.resetCTA(0,500);
+            % 
+            %   prep the fit summary
+            % 
+            [f, ax] = makeStandardFigure(6, [2,3]);
+
+            % 
+            % fit each model
+            % 
+            ix = 1;
+            % ModelNames{1} = 'CTA';
+            ModelNames{1} = 'CTA_EMG_tdt';
+            % [~,mdls(1),ff] = obj.runNTrialsBackModel('CTA',true,true,false,Early_or_Rew_conditioning,[0],false);
+            [~,mdls(1),ff] = obj.runNTrialsBackModel('CTA-&-EMG-&-tdt',true,true,false,Early_or_Rew_conditioning,[0],false);
+            obj.copyAxisChildren(ff.Children(4), ax(1));
+            obj.copyAxisChildren(ff.Children(2), ax(4));
+            % title(ax(ix), 'CTA', 'interpreter', 'none')
+            title(ax(ix), 'CTA_EMG_tdt', 'interpreter', 'none')
+            close(ff)
+
+
+            ix = 2;
+            % ModelNames{ix} = 'LTA';
+            ModelNames{ix} = 'LTA_EMG_tdt';
+            % [~,mdls(end+1),ff] = obj.runNTrialsBackModel('LTA',true,true,false,Early_or_Rew_conditioning,[0],false);
+            [~,mdls(end+1),ff] = obj.runNTrialsBackModel('LTA-&-EMG-&-tdt',true,true,false,Early_or_Rew_conditioning,[0],false);
+            obj.copyAxisChildren(ff.Children(4), ax(2));
+            obj.copyAxisChildren(ff.Children(2), ax(5));
+            title(ax(ix), 'LTA_EMG_tdt', 'interpreter', 'none')
+            % title(ax(ix), 'LTA', 'interpreter', 'none')
+            close(ff)
+
+            ix = 3;
+            ModelNames{ix} = 'LTA_CTA_EMG_tdt';
+            [~,mdls(end+1),ff] = obj.runNTrialsBackModel('LTA-CTA-&-EMG-&-tdt',true,true,false,Early_or_Rew_conditioning,[0],false);
+            obj.copyAxisChildren(ff.Children(4), ax(3));
+            obj.copyAxisChildren(ff.Children(2), ax(6));
+            title(ax(ix), 'LTA_CTA_EMG_tdt', 'interpreter', 'none')
+            close(ff)
+
+            data = mdls{end}.Variables;
+            responseVar = mdls{end}.ResponseName;
+
+            for ii = 1:ix
+                formulas{ii} = mdls{ii}.Formula.char;
+                reversePlotOrder(ax(ii));
+            end
+            makeModel1CTA = true;
+            [results, dataPrinted] = obj.LOOCV_helper(data, responseVar, formulas, mdls, ModelNames, makeModel1CTA);
+    
+            for ii = 1:numel(ax)
+                set(ax(ii), 'fontsize', 35)
+                xlabel(ax(ii), '')
+                ylabel(ax(ii), '')
+            end
+            for ii=4:6
+                xticks(ax(ii), 1:7)
+            end
+
+            ud = [dataPrinted '\n\n\n sloshing_obj.cross_validate_LTA_vs_CTA_models(Early_or_Rew_conditioning=' Early_or_Rew_conditioning ')\n\nTHIS ONLY WORKS RN FOR LTA/CTA/EMG/tdt DATA! uses the 0-500ms interval after flick\n\n' obj.getUserDataStandards];
+            set(f, 'Position', [0.1746    0.1813    0.8254    0.6996], 'userdata', ud, 'name', [[obj.iv.sessionCode{:}] ' | Conditioning: ' Early_or_Rew_conditioning])
+
+        end
     end
 end
