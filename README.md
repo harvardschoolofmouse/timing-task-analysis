@@ -23,7 +23,7 @@ To reproduce figures:
 ## Version Information
 **Current Release**: 2.0.2 (June 16, 2026)  
 **Associated Publication**:  
-- Hamilos et al., 2025 - *"A mechanism linking dopamine's roles in reinforcement, movement and motivation"*  
+- Hamilos et al., 2025 - *"Dopamine reward transients calibrate movement timing via next-trial updates to behavioral vigor."*  
   [biorxiv preprint](https://doi.org/10.1101/2025.04.04.647288)
 
 
