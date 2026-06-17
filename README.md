@@ -21,12 +21,22 @@ To reproduce figures:
 2. Run methods specified in the provenance files
 
 ## Version Information
-**Current Release**: 2.0.1 (April 9, 2025)  
+**Current Release**: 2.0.2 (June 16, 2026)  
 **Associated Publication**:  
 - Hamilos et al., 2025 - *"A mechanism linking dopamine's roles in reinforcement, movement and motivation"*  
   [biorxiv preprint](https://doi.org/10.1101/2025.04.04.647288)
 
-## Matlab dependencies
+
+### Installation Guide
+**Operating Systems**: Windows 10+, MacOS Sonoma 14.5
+**Matlab Version**: 2023B
+
+1. Download Matlab 2023B from the Mathworks website.
+2. Add the Github repo to your path
+3. Add the dependencies (below) using the AddOns tool. linspecer.m and violin.m can be searched using the AddOns manager.
+4. To demo the analysis code, set your path to the demo dataset folder (B5_SNc_13)
+
+### Matlab dependencies
 - Curve Fitting Toolbox v3.5.8+
 - Statistics and Machine Learning Toolbox v11.4+
 - Signal Processing Toolbox v8.1+
