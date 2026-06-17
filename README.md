@@ -30,7 +30,7 @@ To reproduce figures:
 ### Installation Guide
 **Operating Systems**: Windows 10+, MacOS Sonoma 14.5
 
-**Matlab Version**: 2023B
+**Matlab Versions**: 2023B, 2024A
 
 1. Download Matlab 2023B from the Mathworks website.
 2. Add the Github repo to your path
